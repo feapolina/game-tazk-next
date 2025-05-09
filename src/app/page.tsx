@@ -1,103 +1,279 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Toaster } from "@/app/components/ui/toaster";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/app/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/app/components/ui/alert-dialog";
+
+import { LucideFrown, LucideTrash } from "lucide-react";
+import {
+  GameImageSkeleton,
+  GameImageSkeletonGrid,
+} from "@/app/components/custom_components/GameImageSkeleton";
+import ChangeThemeButton from "@/app/components/custom_components/ThemeButton";
+import SearchbarWithList from "@/app/components/custom_components/SearchBar";
+import Footer from "@/app/components/custom_components/Footer";
+import ToDoList from "@/app/components/custom_components/ToDoListComponent";
+
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+interface Game {
+  name: string;
+  image: string;
+}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+export default function HomePage() {
+  const [selectedGames, setSelectedGames] = useState<Game[]>([]);
+  const [wishlistSelectedGames, setWishlistSelectedGames] = useState<Game[]>(
+    []
+  );
+  const [currentGame, setCurrentGame] = useState<Game | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [isPlayingListEmpty, setIsPlayingListEmpty] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isWishlistEmpty, setIsWishlistEmpty] = useState(true);
+
+  const toggleHandleDark = () => setDarkMode(!darkMode);
+
+  useEffect(() => {
+    const fetchPersistedGames = () => {
+      setIsLoading(true);
+      const gamesFromStorage = localStorage.getItem("selectedGames");
+      const wishlistFromStorage = localStorage.getItem("wishlistSelectedGames");
+
+      if (gamesFromStorage) {
+        const parsedGames = JSON.parse(gamesFromStorage);
+        setSelectedGames(parsedGames);
+        setIsPlayingListEmpty(parsedGames.length === 0);
+      }
+      if (wishlistFromStorage) {
+        const parsedWishlist = JSON.parse(wishlistFromStorage);
+        setWishlistSelectedGames(parsedWishlist);
+        setIsWishlistEmpty(parsedWishlist.length === 0);
+      }
+      setIsLoading(false);
+    };
+    fetchPersistedGames();
+  }, []);
+
+  const handleAddGame = (game: Game) => {
+    setSelectedGames((prevGames) => {
+      if (prevGames.some((g) => g.name === game.name)) return prevGames;
+      const updated = [...prevGames, game];
+      localStorage.setItem("selectedGames", JSON.stringify(updated));
+      setIsPlayingListEmpty(false);
+      return updated;
+    });
+  };
+
+  const handleAddGameToWishlist = (game: Game) => {
+    setWishlistSelectedGames((prevGames) => {
+      if (prevGames.some((g) => g.name === game.name)) return prevGames;
+      const updated = [...prevGames, game];
+      localStorage.setItem("wishlistSelectedGames", JSON.stringify(updated));
+      setIsWishlistEmpty(false);
+      return updated;
+    });
+  };
+
+  const handleRemoveGame = (name: string) => {
+    const updated = selectedGames.filter((g) => g.name !== name);
+    setSelectedGames(updated);
+    localStorage.setItem("selectedGames", JSON.stringify(updated));
+    setIsPlayingListEmpty(updated.length === 0);
+
+    const updatedWishlist = wishlistSelectedGames.filter(
+      (g) => g.name !== name
+    );
+    setWishlistSelectedGames(updatedWishlist);
+    localStorage.setItem(
+      "wishlistSelectedGames",
+      JSON.stringify(updatedWishlist)
+    );
+    setIsWishlistEmpty(updatedWishlist.length === 0);
+  };
+
+  const EmptyListMessage = () => (
+    <div className="bg-gray-200 w-full h-64 outline-2 outline-offset-2 outline-dashed rounded-xl outline-gray-400 flex justify-center items-center mb-10">
+      <div className="flex flex-col justify-center items-center gap-4 text-gray-400">
+        <LucideFrown className="size-14 " />
+        <span>Ops.. parece que você não tem nada nessa lista ainda.</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div id="wrapper" className={`min-h-screen ${darkMode ? "dark" : ""}`}>
+      <Toaster />
+      <div className="min-h-screen bg-[#f5f5f5] dark:bg-neutral-900 transition-colors duration-200 font-display antialiased">
+        <div className="container mx-auto px-4 flex flex-col justify-center items-center">
+          <div className="flex w-full gap-12 justify-center items-center p-4">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              src="/assets/game-task-logo-branca.svg"
+              width={100}
+              height={50}
+              alt="Logo"
+              className="object-contain"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <ChangeThemeButton toggleHandleDark={toggleHandleDark} />
+          </div>
+
+          <SearchbarWithList
+            onAddGameToWishlist={handleAddGameToWishlist}
+            onAddGame={handleAddGame}
+          />
+
+          {/* Jogando Agora */}
+          <h2 className="font-bold text-4xl w-full h-full m-6 dark:text-gray-100">
+            Jogando Agora
+          </h2>
+          {isLoading ? (
+            <GameImageSkeletonGrid count={5} />
+          ) : isPlayingListEmpty ? (
+            <EmptyListMessage />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 m-6 ">
+              {selectedGames.map((game) => (
+                <div
+                  key={game.name}
+                  className="relative aspect-2/3 rounded-lg overflow-hidden shadow-md group hover:shadow-xl transition-shadow duration-200 cursor-pointer"
+                  onClick={() => {
+                    setCurrentGame(game);
+                    setIsModalOpen(true);
+                  }}
+                >
+                  <img
+                    src={game.image}
+                    alt={game.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
+                  <h3 className="absolute bottom-3 left-2 right-2 text-white font-bold text-lg leading-tight line-clamp-2">
+                    {game.name}
+                  </h3>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="absolute top-2 right-2 text-white/50 rounded-full size-5 flex items-center justify-center transition-colors hover:text-red-400"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <LucideTrash />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Tem certeza que deseja excluir esse jogo?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Essa ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleRemoveGame(game.name)}
+                        >
+                          Deletar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Lista de desejos */}
+          <h2 className="font-bold text-4xl w-full h-full m-6 dark:text-gray-100">
+            Lista de desejos
+          </h2>
+          {isLoading ? (
+            <GameImageSkeletonGrid count={3} />
+          ) : isWishlistEmpty ? (
+            <EmptyListMessage />
+          ) : (
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 m-6">
+              {wishlistSelectedGames.map((game) => (
+                <div
+                  key={game.name}
+                  className="relative w-100 rounded-lg overflow-hidden shadow-md group hover:shadow-xl transition-shadow duration-200"
+                >
+                  <img
+                    src={game.image}
+                    alt={game.name}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
+                  <h3 className="absolute bottom-3 left-2 right-2 text-white font-bold text-lg leading-tight line-clamp-2">
+                    {game.name}
+                  </h3>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="absolute top-2 right-2 text-white/50 rounded-full size-5 flex items-center justify-center transition-colors hover:text-red-400 cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <LucideTrash />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Tem certeza que deseja excluir esse jogo?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Essa ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleRemoveGame(game.name)}
+                        >
+                          Deletar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      <Dialog open={isModalOpen} onOpenChange={() => setIsModalOpen(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lista de tarefas para {currentGame?.name}</DialogTitle>
+          </DialogHeader>
+          <div>
+            <ToDoList gameName={currentGame?.name || ""} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Footer />
     </div>
   );
 }
