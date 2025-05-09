@@ -8,7 +8,7 @@
  * console.log(newTodo);
  */
 
-const API_KEY = process.env.NEXT_ENV_RAWG_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_RAWG_API_KEY;
 const BASE_URL = "https://api.rawg.io/api/games";
 
 type GameData = {
