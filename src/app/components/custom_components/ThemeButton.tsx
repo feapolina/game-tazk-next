@@ -11,7 +11,7 @@ const ChangeThemeButton: FC<ChangeThemeButtonProps> = ({
   return (
     <>
       <button
-        className="p-2 w-fit h-fit flex justify-center items-center rounded-xl dark:text-white dark:border-2 text-neutral-900 border-2 shadow-sm"
+        className="p-2 w-fit h-fit flex justify-center items-center rounded-xl dark:text-white dark:border-2 text-neutral-900 border-2 shadow-sm cursor-pointer"
         onClick={toggleHandleDark} // Chama a função passada como prop
       >
         <LucideSun />

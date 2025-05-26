@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/app/components/ui/input";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
-import { fetchGames } from "@/app/apiService";
+import { searchGamesRAWG } from "@/app/apiService";
 import { LucideHeart, Search } from "lucide-react";
 
 import { useToast } from "@/app/hooks/use-toast";
@@ -55,7 +55,7 @@ export default function SearchbarWithList({
       if (searchQuery.length > 0) {
         setIsLoading(true);
         setIsOpen(true);
-        const results = await fetchGames(searchQuery);
+        const results = await searchGamesRAWG(searchQuery);
         setGames(results);
         setIsLoading(false);
       } else {
@@ -92,7 +92,7 @@ export default function SearchbarWithList({
           value={searchQuery}
           onFocus={() => setIsOpen(true)}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 text-sm bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 dark:text-white rounded-full focus:outline-hidden focus:border-blue-500 dark:focus:border-blue-400 focus:ring-0 transition-colors duration-300"
+          className="w-full pl-10 pr-4 py-2 text-sm bg-white dark:bg-neutral-800 border-2 border-gray-300 dark:border-gray-700 dark:text-white rounded-full focus:outline-hidden focus:border-blue-500 dark:focus:border-blue-400 focus:ring-0 transition-colors duration-300"
           aria-label="Search games"
         />
         <Search
@@ -101,7 +101,7 @@ export default function SearchbarWithList({
         />
       </div>
       {isOpen && searchQuery && (
-        <ScrollArea className="h-[300px] w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+        <ScrollArea className="h-[300px] w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-neutral-800 shadow-lg">
           <ul className="p-2">
             {isLoading ? (
               <li className="px-4 py-2 flex gap-4 flex-col">
@@ -114,7 +114,7 @@ export default function SearchbarWithList({
               games.map((game, index) => (
                 <li
                   key={index}
-                  className="flex justify-between space-x-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors duration-200"
+                  className="flex justify-between space-x-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md cursor-pointer transition-colors duration-200"
                   onClick={() => handleAddGameWithToast(game)}
                 >
                   <div className="flex justify-center items-center space-x-3">
@@ -132,9 +132,9 @@ export default function SearchbarWithList({
                       e.stopPropagation();
                       handleWishlistToast(game);
                     }}
-                    className="hover:bg-gray-200 ghost"
+                    className="cursor-pointer w-10 p-2 bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition-colors duration-200"
                   >
-                    <LucideHeart className="dark:text-gray-200" />
+                    <LucideHeart className=" dark:text-white" />
                   </Button>
                 </li>
               ))
