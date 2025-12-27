@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   webpack: (config: Configuration) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = config.resolve.alias || {};
-    config.resolve.alias["@"] = require("path").resolve(__dirname, "src");
+    (config.resolve.alias as Record<string, string>)["@"] = require("path").resolve(__dirname, "src");
     return config;
   },
 };

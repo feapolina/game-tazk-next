@@ -3,65 +3,63 @@ import { CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Card, CardContent } from "@/app/components/ui/card";
+import {
+  toggleTodoDone,
+  fetchTodoForGameFromDatabase,
+  saveTodoForGameOnDatabase,
+  deleteTodoFromDatabase,
+} from "@/app/gameService";
 
 interface Task {
   id: number;
-  text: string;
-  completed: boolean;
+  task: string;
+  isCompleted: boolean;
 }
 
 interface ToDoListProps {
-  gameName: string;
+  gameId: number | undefined;
 }
 
-export default function ToDoList({ gameName }: ToDoListProps) {
-  // Funções utilitárias precisam ser declaradas antes do useState
-  const getStorageKey = (game: string) =>
-    `game-tasks-${game.toLowerCase().replace(/\s+/g, "-")}`;
-
-  const loadStoredTasks = (game: string): Task[] => {
-    const storedTasks = localStorage.getItem(getStorageKey(game));
-    return storedTasks ? JSON.parse(storedTasks) : [];
-  };
-
-  // Agora podemos usar o loadStoredTasks no useState
-  const [tasks, setTasks] = useState<Task[]>(() => loadStoredTasks(gameName));
+export default function ToDoList({ gameId }: ToDoListProps) {
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState<string>("");
 
-  // Effects e handlers
   useEffect(() => {
-    localStorage.setItem(getStorageKey(gameName), JSON.stringify(tasks));
-  }, [tasks, gameName]);
+    if (!gameId) return;
+    fetchTodoForGameFromDatabase(gameId).then((result) => {
+        if(result.success && result.data) {
+             setTasks(result.data as any); 
+             // Note: result.data type from supabase might be inferred loosely, 
+             // but we expect it to match our table which has bigint id. 
+             // in JS runtime it fits in number usually.
+        }
+    });
+  }, [gameId]);
 
-  useEffect(() => {
-    setTasks(loadStoredTasks(gameName));
-  }, [gameName]);
-
-  const addTask = (e: React.FormEvent<HTMLFormElement>) => {
+  const addTask = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (newTask.trim()) {
-      setTasks([
-        ...tasks,
-        {
-          id: Date.now(),
-          text: newTask.trim(),
-          completed: false,
-        },
-      ]);
-      setNewTask("");
+    if (!gameId || !newTask.trim()) return;
+
+    await saveTodoForGameOnDatabase(gameId, newTask.trim());
+    const result = await fetchTodoForGameFromDatabase(gameId);
+    if(result.success && result.data) setTasks(result.data as any);
+    setNewTask("");
+  };
+
+  const toggleTask = async (taskId: number, isCompleted: boolean) => {
+    await toggleTodoDone(taskId, !isCompleted);
+    if (gameId) {
+        const result = await fetchTodoForGameFromDatabase(gameId);
+        if(result.success && result.data) setTasks(result.data as any);
     }
   };
 
-  const toggleTask = (taskId: number) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-
-  const deleteTask = (taskId: number) => {
-    setTasks(tasks.filter((task) => task.id !== taskId));
+  const deleteTask = async (taskId: number) => {
+    await deleteTodoFromDatabase(taskId);
+    if (gameId) {
+        const result = await fetchTodoForGameFromDatabase(gameId);
+        if(result.success && result.data) setTasks(result.data as any);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,8 +67,8 @@ export default function ToDoList({ gameName }: ToDoListProps) {
   };
 
   return (
-    <Card className="w-full">
-      <CardContent className="p-4">
+    <div className="w-full">
+      <div className="p-0">
         <form onSubmit={addTask} className="flex gap-2 mb-4">
           <Input
             type="text"
@@ -79,7 +77,7 @@ export default function ToDoList({ gameName }: ToDoListProps) {
             onChange={handleInputChange}
             className="flex-1"
           />
-          <Button type="submit">
+          <Button type="submit" className="cursor-pointer">
             <Plus className="h-4 w-4" />
           </Button>
         </form>
@@ -87,29 +85,30 @@ export default function ToDoList({ gameName }: ToDoListProps) {
           {tasks.map((task) => (
             <div
               key={task.id}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 group"
+              className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 group"
             >
               <button
-                onClick={() => toggleTask(task.id)}
-                className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                onClick={() => toggleTask(task.id, task.isCompleted)}
+                className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
                 type="button"
               >
-                {task.completed ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                {task.isCompleted ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500 cursor-pointer" />
                 ) : (
-                  <Circle className="h-5 w-5" />
+                  <Circle className="h-5 w-5 cursor-pointer" />
                 )}
               </button>
               <span
                 className={`flex-1 ${
-                  task.completed ? "line-through text-slate-500" : ""
+                  task.isCompleted ? "line-through text-slate-500" : "text-neutral-700 dark:text-neutral-200"
                 }`}
               >
-                {task.text}
+                {task.task}
               </span>
               <Button
                 onClick={() => deleteTask(task.id)}
-                className="opacity-0 group-hover:opacity-100 ghost"
+                className="opacity-0 group-hover:opacity-100 ghost h-8 w-8 p-0 cursor-pointer hover:bg-red-500/10"
+                variant="ghost"
                 type="button"
               >
                 <Trash2 className="h-4 w-4 text-red-500" />
@@ -117,7 +116,7 @@ export default function ToDoList({ gameName }: ToDoListProps) {
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -58,10 +58,10 @@ export default function LoginPage() {
         const errorMessages: { [key: string]: string } = {
           "Invalid login credentials": "Email ou senha incorretos.",
           "Email not confirmed":
-            "Email não confirmado. Verifique sua caixa de entrada.",
+            "Email ou senha inválidos.",
           "Too many requests": "Muitas tentativas. Tente novamente mais tarde.",
         };
-        setError(errorMessages[error.message] || error.message);
+        setError(errorMessages[error.message] || "Erro inesperado. Tente novamente.");
       } else {
         router.push("/");
         router.refresh();
@@ -100,12 +100,13 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8 ">
         {/* Logo */}
         <div className="flex justify-center">
-          <Image
-            src="/assets/logo_nebulosa_app.svg"
-            width={250}
-            height={50}
-            alt="Logo"
-          />
+            <Image
+              src="/logo_nebulosa_app.svg"
+              width={180}
+              height={40}
+              alt="Nebula Logo"
+              className="object-contain"
+            />
         </div>
 
         <Card className="bg-gray-900 border-gray-800">
@@ -159,7 +160,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-500 hover:text-gray-300"
+                    className="absolute right-3 top-3 text-gray-500 hover:text-gray-300 cursor-pointer"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -181,7 +182,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                 disabled={loading}
               >
                 {loading ? "Entrando..." : "Entrar"}
@@ -204,7 +205,7 @@ export default function LoginPage() {
               variant="outline"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+              className="w-full bg-gray-800 border-gray-700 text-white hover:bg-gray-700 cursor-pointer"
             >
               <Chrome className="mr-2 h-4 w-4" />
               Google

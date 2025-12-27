@@ -1,5 +1,6 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "./components/theme-provider";
 import type { Metadata } from "next";
 
 const poppins = Poppins({
@@ -10,7 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "GameTask",
+  title: "Nebula",
   description: "Acompanhe seus jogos e suas tarefas",
 };
 
@@ -21,7 +22,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={`${poppins.variable}`}>{children}</body>
+      <body className={`${poppins.variable}`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

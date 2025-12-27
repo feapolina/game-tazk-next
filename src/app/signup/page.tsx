@@ -34,7 +34,16 @@ export default function SignupPage() {
   const [success, setSuccess] = useState("");
 
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  // Ensure no trailing spaces in env vars
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+  const supabase = createClientComponentClient({
+    supabaseUrl,
+    supabaseKey,
+  });
+
+
 
   // Validação de senha
   const passwordValidation = {
@@ -76,6 +85,7 @@ export default function SignupPage() {
     }
 
     try {
+
       const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -87,13 +97,33 @@ export default function SignupPage() {
       });
 
       if (error) {
-        setError(error.message);
+        // Security: Avoid leaking specific details about why signup failed (e.g., "User already registered")
+        setError("Não foi possível criar a conta. Verifique os dados e tente novamente.");
       } else {
-        setSuccess(
-          "Conta criada com sucesso! Verifique seu email para confirmar a conta."
-        );
-        // Limpar formulário
-        setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+        // Verificar se temos uma sessão ativa (auto-confirmed)
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session) {
+          // Login automático bem-sucedido
+          setSuccess("Conta criada com sucesso! Redirecionando...");
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 1500);
+        } else {
+          // Fallback caso a confirmação de email ainda esteja ativa no Supabase
+          setSuccess(
+            "Conta criada! Se o login automático não ocorrer, verifique se a confirmação de email está desativada no Supabase ou cheque sua caixa de entrada."
+          );
+          setFormData({
+            name: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+          });
+        }
       }
     } catch (error) {
       setError("Erro inesperado. Tente novamente.");

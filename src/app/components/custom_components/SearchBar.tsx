@@ -4,27 +4,21 @@ import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { searchGamesRAWG } from "@/app/apiService";
 import { LucideHeart, Search } from "lucide-react";
 
-import { useToast } from "@/app/hooks/use-toast";
 import GameSkeleton from "./GameSkeleton";
 import { Button } from "@/app/components/ui/button";
-
-interface Game {
-  name: string;
-  image: string;
-}
+import { GameData } from "@/app/types";
 
 interface SearchbarWithListProps {
-  onAddGame: (game: Game) => void;
-  onAddGameToWishlist: (game: Game) => void;
+  onAddGame: (game: GameData) => void;
+  onAddGameToWishlist: (game: GameData) => void;
 }
 
 export default function SearchbarWithList({
   onAddGame,
   onAddGameToWishlist,
 }: SearchbarWithListProps) {
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [games, setGames] = useState<Game[]>([]);
+  const [games, setGames] = useState<GameData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -67,22 +61,6 @@ export default function SearchbarWithList({
     searchGames();
   }, [searchQuery]);
 
-  const handleAddGameWithToast = (game: Game) => {
-    onAddGame(game);
-    toast({
-      title: "Jogo adicionado! 🎉",
-      description: `${game.name} foi adicionado.`,
-    });
-  };
-
-  const handleWishlistToast = (game: Game) => {
-    onAddGameToWishlist(game);
-    toast({
-      title: "Jogo adicionado à lista de desejos! 🎉",
-      description: `${game.name} foi adicionado.`,
-    });
-  };
-
   return (
     <div ref={wrapperRef} className="w-full max-w-2xl mx-auto space-y-2 m-4">
       <div className="relative">
@@ -115,11 +93,11 @@ export default function SearchbarWithList({
                 <li
                   key={index}
                   className="flex justify-between space-x-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-md cursor-pointer transition-colors duration-200"
-                  onClick={() => handleAddGameWithToast(game)}
+                  onClick={() => onAddGame(game)}
                 >
                   <div className="flex justify-center items-center space-x-3">
                     <img
-                      src={game.image}
+                      src={game.cover_url}
                       alt={game.name}
                       className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                     />
@@ -130,7 +108,7 @@ export default function SearchbarWithList({
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleWishlistToast(game);
+                      onAddGameToWishlist(game);
                     }}
                     className="cursor-pointer w-10 p-2 bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition-colors duration-200"
                   >
