@@ -78,14 +78,14 @@ export default function Navbar({ transparent = false }: NavbarProps) {
           width={180}
           height={40}
           alt="Nebula Logo"
-          className="object-contain"
+          className="object-contain invert dark:invert-0"
         />
       </div>
       <div className="flex items-center gap-4 ml-auto">
         <ModeToggle />
         {transparent ? (
           <Link href="/login">
-            <Button variant="ghost" className="text-white hover:text-white/80 hover:bg-white/10 font-medium border border-purple-500 cursor-pointer">
+            <Button variant="ghost" className="text-black hover:text-black/80 hover:bg-white/10 font-medium border-2 border-purple-500 cursor-pointer dark:text-white">
               Entrar
             </Button>
           </Link>

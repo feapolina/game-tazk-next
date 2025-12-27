@@ -14,23 +14,23 @@ export default function WelcomePage() {
   const isMobile = useMobile();
   const items = [
     {
-      image: "https://placehold.co/400x300/1f1f1f/a78bfa?text=Library",
+      image: "/assets/PlayingNow-Pic.png",
       title: "Organização",
       subtitle: "Gerencie sua biblioteca por plataforma e status.",
       borderColor: "#8b5cf6",
       gradient: "linear-gradient(145deg, #8b5cf6, #000)",
     },
     {
-      image: "https://placehold.co/400x300/1f1f1f/f472b6?text=Discover",
-      title: "Descoberta",
-      subtitle: "Encontre novos jogos baseados no seu gosto.",
+      image: "/assets/ToDoList-Pic.png",
+      title: "Mantenha controle dos objetivos",
+      subtitle: "Crie e organize tarefas para alcançar seus objetivos.",
       borderColor: "#ec4899",
-      gradient: "linear-gradient(145deg, #ec4899, #000)",
+      gradient: "linear-gradient(145deg, #110b0eff, #000)",
     },
     {
-      image: "https://placehold.co/400x300/1f1f1f/22d3ee?text=Track",
-      title: "Progresso",
-      subtitle: "Acompanhe suas conquistas e jogos zerados.",
+      image: "/assets/Wishlist-Pic.png",
+      title: "Lista de Desejos",
+      subtitle: "Crie uma wishlist de jogos!",
       borderColor: "#06b6d4",
       gradient: "linear-gradient(145deg, #06b6d4, #000)",
     }
