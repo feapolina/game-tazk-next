@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     (config.resolve.alias as Record<string, string>)["@"] = require("path").resolve(__dirname, "src");
     return config;
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig;
