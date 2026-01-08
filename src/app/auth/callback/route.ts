@@ -6,6 +6,15 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const error = requestUrl.searchParams.get("error");
+  const next = requestUrl.searchParams.get("next");
+  const type = requestUrl.searchParams.get("type");
+
+  console.log("Auth callback triggered:", {
+    url: request.url,
+    next,
+    type,
+    error,
+  });
 
   // Se o usuário cancelou ou houve erro no OAuth
   if (error) {
@@ -35,6 +44,14 @@ export async function GET(request: NextRequest) {
         `${requestUrl.origin}/login?error=auth-callback-error`
       );
     }
+  }
+
+  if (next) {
+    return NextResponse.redirect(`${requestUrl.origin}${next}`);
+  }
+
+  if (type === "recovery") {
+    return NextResponse.redirect(`${requestUrl.origin}/update-password`);
   }
 
   // Redirecionar para a página inicial após login bem-sucedido

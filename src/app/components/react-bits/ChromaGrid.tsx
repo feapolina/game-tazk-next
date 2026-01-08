@@ -20,6 +20,7 @@ export interface ChromaGridProps {
   fadeOut?: number;
   ease?: string;
   isMobile?: boolean;
+  children?: React.ReactNode;
 }
 
 type SetterFn = (v: number | string) => void;
@@ -31,7 +32,8 @@ const ChromaGrid: React.FC<ChromaGridProps> = ({
   damping = 0.45,
   fadeOut = 0.6,
   ease = 'power3.out',
-  isMobile = false
+  isMobile = false,
+  children
 }) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const fadeRef = useRef<HTMLDivElement>(null);
@@ -161,6 +163,11 @@ const ChromaGrid: React.FC<ChromaGridProps> = ({
       <div
         className={`w-full flex flex-col items-center gap-6 ${className}`}
       >
+        {children && (
+          <div className="w-full mb-8">
+            {children}
+          </div>
+        )}
         {data.map((c, i) => (
           <article
             key={i}
@@ -204,6 +211,11 @@ const ChromaGrid: React.FC<ChromaGridProps> = ({
         } as React.CSSProperties
       }
     >
+      {children && (
+        <div className="relative z-50 w-full mb-12">
+          {children}
+        </div>
+      )}
       {data.map((c, i) => (
         <article
           key={i}

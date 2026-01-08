@@ -19,10 +19,18 @@ export async function middleware(req: NextRequest) {
   // Se o usuário NÃO está logado e tenta acessar páginas protegidas
   if (!session) {
     // Lista de rotas públicas
-    const publicRoutes = ["/welcome", "/login", "/signup", "/auth/callback"];
-    
+    const publicRoutes = [
+      "/welcome",
+      "/login",
+      "/signup",
+      "/auth/callback",
+      "/forgot-password",
+    ];
+
     // Se a rota atual NÃO for pública e não for arquivo estático (já tratado no config matcher)
-    const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+    const isPublicRoute = publicRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
 
     if (!isPublicRoute) {
       const url = req.nextUrl.clone();
@@ -32,7 +40,13 @@ export async function middleware(req: NextRequest) {
   }
 
   // Se o usuário ESTÁ logado e tenta acessar páginas públicas de auth ou welcome
-  if (session && (pathname === "/login" || pathname === "/signup" || pathname === "/welcome")) {
+  if (
+    session &&
+    (pathname === "/login" ||
+      pathname === "/signup" ||
+      pathname === "/welcome" ||
+      pathname === "/forgot-password")
+  ) {
     const url = req.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

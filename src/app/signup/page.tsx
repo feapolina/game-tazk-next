@@ -43,8 +43,6 @@ export default function SignupPage() {
     supabaseKey,
   });
 
-
-
   // Validação de senha
   const passwordValidation = {
     minLength: formData.password.length >= 8,
@@ -85,7 +83,6 @@ export default function SignupPage() {
     }
 
     try {
-
       const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -98,7 +95,9 @@ export default function SignupPage() {
 
       if (error) {
         // Security: Avoid leaking specific details about why signup failed (e.g., "User already registered")
-        setError("Não foi possível criar a conta. Verifique os dados e tente novamente.");
+        setError(
+          "Não foi possível criar a conta. Verifique os dados e tente novamente."
+        );
       } else {
         // Verificar se temos uma sessão ativa (auto-confirmed)
         const {
@@ -167,8 +166,8 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="flex justify-center">
           <Image
-            src="/assets/logo_nebulosa_app.svg"
-            width={250}
+            src="https://xnwjumqehhbrsbcupouv.supabase.co/storage/v1/object/public/nebula-images/Neb.png"
+            width={200}
             height={50}
             alt="Logo"
           />

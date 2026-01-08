@@ -76,7 +76,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
     )}>
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <Image
-          src="/logo_nebulosa_app.svg"
+          src="https://xnwjumqehhbrsbcupouv.supabase.co/storage/v1/object/public/nebula-images/Neb.png"
           width={180}
           height={40}
           alt="Nebula Logo"

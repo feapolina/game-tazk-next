@@ -7,6 +7,7 @@ import { LucideHeart, Search } from "lucide-react";
 import GameSkeleton from "./GameSkeleton";
 import { Button } from "@/app/components/ui/button";
 import { GameData } from "@/app/types";
+import TextType from "@/components/TextType";
 
 interface SearchbarWithListProps {
   onAddGame: (game: GameData) => void;
@@ -66,7 +67,7 @@ export default function SearchbarWithList({
       <div className="relative">
         <Input
           type="search"
-          placeholder="Procure por um jogo..."
+          placeholder=""
           value={searchQuery}
           onFocus={() => setIsOpen(true)}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -77,6 +78,22 @@ export default function SearchbarWithList({
           className="dark:text-white absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
           size={18}
         />
+        {!searchQuery && (
+          <div className="absolute left-10 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500 dark:text-gray-400 text-sm">
+            <TextType
+              text={[
+                "Escreva o nome de um jogo...",
+                "Minecraft...",
+                "South Park...",
+                "Stardew Valley...",
+              ]}
+              typingSpeed={30}
+              deletingSpeed={30}
+              cursorCharacter="▎"
+              loop={true}
+            />
+          </div>
+        )}
       </div>
       {isOpen && searchQuery && (
         <ScrollArea className="h-[300px] w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-neutral-800 shadow-lg">

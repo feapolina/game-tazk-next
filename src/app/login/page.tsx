@@ -102,9 +102,9 @@ function LoginContent() {
       {/* Logo */}
       <div className="flex justify-center">
         <Image
-          src="/logo_nebulosa_app.svg"
-          width={180}
-          height={40}
+          src="https://xnwjumqehhbrsbcupouv.supabase.co/storage/v1/object/public/nebula-images/Neb.png"
+          width={200}
+          height={50}
           alt="Nebula Logo"
           className="object-contain"
         />
@@ -236,11 +236,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
       {/* O Suspense protege o build contra o erro do useSearchParams */}
-      <Suspense 
+      <Suspense
         fallback={
           <div className="flex flex-col items-center gap-4 text-gray-400">
-             <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-             <p>Carregando login...</p>
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <p>Carregando login...</p>
           </div>
         }
       >
