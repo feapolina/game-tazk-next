@@ -28,7 +28,7 @@ export default function WelcomePage() {
             y={-1}
             className={cn(
               "[mask-image:linear-gradient(to_bottom_right,white,gray,transparent)] ",
-              "opacity-50"
+              "opacity-50",
             )}
             squares={[
               [4, 4],
@@ -40,7 +40,6 @@ export default function WelcomePage() {
               [12, 15],
               [15, 10],
               [10, 15],
-
             ]}
           />
         </div>
@@ -67,7 +66,7 @@ export default function WelcomePage() {
                 <Link href="/signup">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto font-semibold px-8 h-12 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.3)] border-0"
+                    className="w-full sm:w-auto font-semibold px-8 h-12 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.3)] border-0 cursor-pointer"
                   >
                     Começar
                   </Button>
@@ -76,7 +75,7 @@ export default function WelcomePage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full sm:w-auto px-8 h-12 rounded-full backdrop-blur-sm"
+                    className="w-full sm:w-auto px-8 h-12 rounded-full backdrop-blur-sm cursor-pointer"
                   >
                     Ver Funcionalidades
                   </Button>
@@ -114,27 +113,26 @@ export default function WelcomePage() {
                 jogos.
               </p>
             </div>
-            <section className="flex flex-row items-center justify-center gap-8 mt-12">
+            <section className="flex flex-col md:flex-row items-stretch justify-center gap-6 mt-12">
               <SpotlightCard
-                className="custom-spotlight-card w-auto h-"
+                className="custom-spotlight-card flex-1 flex flex-col"
                 spotlightColor="rgba(0, 229, 255, 0.2)"
               >
                 <h2 className="text-2xl font-bold">Acompanhe seus jogos</h2>
                 <p className="text-muted-foreground text-lg mb-4">
                   Registre todos os jogos que você está jogando no momento.
                 </p>
-                <div>
+                <div className="flex-1 relative min-h-48 rounded-lg overflow-hidden">
                   <Image
                     src="https://xnwjumqehhbrsbcupouv.supabase.co/storage/v1/object/public/nebula-images/PlayingNow-Pic.png"
-                    alt="Spotlight"
-                    width={1200}
-                    height={720}
-                    className="w-full h-full object-cover rounded-lg"
+                    alt="Acompanhe seus jogos"
+                    fill
+                    className="object-cover"
                   />
                 </div>
               </SpotlightCard>
               <SpotlightCard
-                className="custom-spotlight-card w-auto h-"
+                className="custom-spotlight-card flex-1 flex flex-col"
                 spotlightColor="rgba(0, 229, 255, 0.2)"
               >
                 <h2 className="text-2xl font-bold">
@@ -144,31 +142,29 @@ export default function WelcomePage() {
                   Pra quem joga vários jogos ao mesmo tempo, perder-se em
                   objetivos se torna comum.
                 </p>
-                <div>
+                <div className="flex-1 relative min-h-48 rounded-lg overflow-hidden">
                   <Image
                     src="https://xnwjumqehhbrsbcupouv.supabase.co/storage/v1/object/public/nebula-images/ToDoList-Pic.png"
-                    alt="Spotlight"
-                    width={1200}
-                    height={720}
-                    className="w-full h-full object-cover rounded-lg"
+                    alt="Salve suas tarefas"
+                    fill
+                    className="object-cover"
                   />
                 </div>
               </SpotlightCard>
               <SpotlightCard
-                className="custom-spotlight-card w-auto h-"
+                className="custom-spotlight-card flex-1 flex flex-col"
                 spotlightColor="rgba(0, 229, 255, 0.2)"
               >
                 <h2 className="text-2xl font-bold">Lista de Desejos</h2>
                 <p className="text-muted-foreground text-lg mb-4">
                   Registre todos os jogos que você deseja comprar em seguida.
                 </p>
-                <div>
+                <div className="flex-1 relative min-h-48 rounded-lg overflow-hidden">
                   <Image
                     src="https://xnwjumqehhbrsbcupouv.supabase.co/storage/v1/object/public/nebula-images/Wishlist-Pic.png"
-                    alt="Spotlight"
-                    width={1200}
-                    height={720}
-                    className="w-full h-full object-cover rounded-lg"
+                    alt="Lista de desejos"
+                    fill
+                    className="object-cover"
                   />
                 </div>
               </SpotlightCard>

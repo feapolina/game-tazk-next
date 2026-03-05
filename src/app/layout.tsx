@@ -1,13 +1,12 @@
-import { Poppins } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/theme-provider";
 import type { Metadata } from "next";
 
-const poppins = Poppins({
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-Poppins",
-  weight: "300",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${poppins.variable}`}>
+      <body className={`${inter.variable}`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
