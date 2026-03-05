@@ -53,6 +53,7 @@ import { GameImageSkeletonGrid } from "@/app/components/custom_components/GameIm
 import DroppableContainer from "@/app/components/custom_components/DroppableContainer";
 import EmptyListMessage from "@/app/components/custom_components/EmptyListMessage";
 import Navbar from "@/app/components/custom_components/Navbar";
+import { coverUrlForDialog } from "@/app/apiService";
 
 export default function HomePage() {
   const { toast } = useToast();
@@ -484,7 +485,7 @@ export default function HomePage() {
             <div className="relative w-full h-56 bg-neutral-900">
               {currentGame?.cover_url && (
                 <img
-                  src={currentGame.cover_url.replace("t_thumb", "t_1080p")}
+                  src={coverUrlForDialog(currentGame.cover_url)}
                   alt={currentGame.name}
                   className="w-full h-full object-cover opacity-90"
                 />

@@ -55,6 +55,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const supabase = createClientComponentClient();
   const router = useRouter();
   const [userName, setUserName] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -64,6 +65,11 @@ export default function Navbar({ transparent = false }: NavbarProps) {
       if (user?.user_metadata?.full_name) {
         const firstName = user.user_metadata.full_name.split(" ")[0];
         setUserName(firstName);
+      } else if (user?.email) {
+        setUserName(user.email.split("@")[0]);
+      }
+      if (user?.user_metadata?.avatar_url) {
+        setAvatarUrl(user.user_metadata.avatar_url);
       }
     };
     getUser();
@@ -113,6 +119,13 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                 className="rounded-full w-10 h-10 p-0 overflow-hidden cursor-pointer"
               >
                 <Avatar className="h-full w-full">
+                  {avatarUrl && (
+                    <AvatarImage
+                      src={avatarUrl}
+                      alt={userName}
+                      className="object-cover"
+                    />
+                  )}
                   <AvatarFallback
                     className={cn(
                       "text-white font-medium",

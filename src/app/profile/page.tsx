@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -13,11 +13,16 @@ import {
   User,
   Calendar,
   ChevronRight,
+  Camera,
+  Loader2,
+  Home,
 } from "lucide-react";
+import { uploadProfilePicture, getAvatarUrl } from "@/app/lib/avatarService";
 import Navbar from "@/app/components/custom_components/Navbar";
 import Footer from "@/app/components/custom_components/Footer";
 import { fetchGamesListFromDatabase } from "@/app/gameService";
 import { GameData } from "@/app/types";
+import { optimizeCoverUrl } from "@/app/apiService";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -97,7 +102,7 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <div className="relative rounded-2xl border border-neutral-800 bg-neutral-900 p-5 flex flex-col gap-3 overflow-hidden hover:border-neutral-700 transition-all duration-200">
+    <div className="relative rounded-2xl border border-neutral-800 bg-neutral-900 p-5 flex flex-col gap-3 overflow-hidden hover:border-orange-500/40 transition-colors duration-150">
       <div
         className="absolute -top-8 -right-8 w-28 h-28 rounded-full blur-3xl opacity-15"
         style={{ background: accent }}
@@ -126,13 +131,14 @@ function MiniGameCard({
   const platform = getPlatformBadge(game.platform);
   return (
     <div
-      className="group relative rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 hover:border-neutral-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/50"
+      className="group relative rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 hover:border-orange-500/40 transition-colors duration-150"
       style={{ aspectRatio: "3/4" }}
     >
       <img
-        src={game.cover_url}
+        src={optimizeCoverUrl(game.cover_url)}
         alt={game.name}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
@@ -235,11 +241,16 @@ function EmptySection({ message }: { message: string }) {
 export default function ProfilePage() {
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [joinedAt, setJoinedAt] = useState("");
+  const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [playing, setPlaying] = useState<GameData[]>([]);
   const [wishlist, setWishlist] = useState<GameData[]>([]);
@@ -256,11 +267,13 @@ export default function ProfilePage() {
         return;
       }
 
+      setUserId(user.id);
       setUserName(
         user.user_metadata?.full_name || user.email?.split("@")[0] || "Jogador",
       );
       setUserEmail(user.email || "");
       setJoinedAt(user.created_at || "");
+      setAvatarUrl(getAvatarUrl(user));
 
       const result = await fetchGamesListFromDatabase();
       if (result.success && result.data) {
@@ -278,6 +291,32 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/welcome");
+  };
+
+  const handleAvatarClick = () => {
+    if (!uploading) fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    const result = await uploadProfilePicture(file, userId, supabase);
+
+    if (result.success && result.url) {
+      setAvatarUrl(result.url);
+    } else {
+      setUploadError(result.error ?? "Erro desconhecido.");
+      // Auto-clear error after 4 seconds
+      setTimeout(() => setUploadError(null), 4000);
+    }
+
+    setUploading(false);
+    // Reset input so the same file can be re-selected after an error
+    e.target.value = "";
   };
 
   const firstName = userName.split(" ")[0];
@@ -309,13 +348,54 @@ export default function ProfilePage() {
         {/* ── Profile header card ── */}
         <div className="relative -mt-16 mb-8 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-            {/* Avatar */}
+            {/* Avatar — clickable upload trigger */}
             <div
-              className="w-24 h-24 rounded-2xl shrink-0 flex items-center justify-center text-white text-3xl font-bold shadow-xl"
-              style={{ background: avatarGradient }}
+              className="relative shrink-0 group/avatar"
+              onClick={handleAvatarClick}
             >
-              {loading ? "…" : initials}
+              <div
+                className="w-24 h-24 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-xl overflow-hidden cursor-pointer"
+                style={{ background: avatarGradient }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Foto de perfil"
+                    className="w-full h-full object-cover"
+                  />
+                ) : loading ? (
+                  "…"
+                ) : (
+                  initials
+                )}
+              </div>
+
+              {/* Camera overlay */}
+              <div className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                {uploading ? (
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="h-6 w-6 text-white" />
+                )}
+              </div>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleAvatarChange}
+                disabled={uploading}
+              />
             </div>
+
+            {/* Upload error toast */}
+            {uploadError && (
+              <div className="absolute left-0 right-0 -bottom-12 mx-6 px-4 py-2 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-medium text-center">
+                {uploadError}
+              </div>
+            )}
 
             {/* Identity */}
             <div className="flex-1 min-w-0">
@@ -346,14 +426,23 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-neutral-400 border border-neutral-800 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/5 transition-all duration-200 cursor-pointer self-start shrink-0"
-            >
-              <LogOut className="h-4 w-4" />
-              Sair
-            </button>
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 self-start shrink-0">
+              <Link
+                href="/"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-neutral-400 border border-neutral-800 hover:border-violet-500/40 hover:text-violet-400 hover:bg-violet-500/5 transition-all duration-200"
+              >
+                <Home className="h-4 w-4" />
+                Início
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-neutral-400 border border-neutral-800 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/5 transition-all duration-200 cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" />
+                Sair
+              </button>
+            </div>
           </div>
         </div>
 

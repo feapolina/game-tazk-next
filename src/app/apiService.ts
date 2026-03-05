@@ -1,5 +1,52 @@
 import { GameData } from "./types";
 
+// ─── Image URL helpers ────────────────────────────────────────────────────────
+
+/**
+ * Resizes a RAWG background_image URL to a smaller thumbnail.
+ * RAWG CDN supports on-the-fly resizing via the /resize/ path segment.
+ * Example: https://media.rawg.io/media/games/foo.jpg
+ *       -> https://media.rawg.io/media/resize/420/-/games/foo.jpg
+ */
+export function optimizeCoverUrl(url: string, width = 420): string {
+  if (!url) return url;
+  try {
+    // Handle RAWG media URLs
+    if (url.includes("media.rawg.io/media/")) {
+      return url.replace("/media/", `/media/resize/${width}/-/`);
+    }
+    // IGDB-style token swap: t_thumb → t_cover_big (264x374, plenty for cards)
+    if (url.includes("t_thumb")) {
+      return url.replace("t_thumb", "t_cover_big");
+    }
+  } catch {
+    // fall through to original URL
+  }
+  return url;
+}
+
+/**
+ * Returns a medium-quality version for use in the dialog hero banner.
+ * RAWG: resize to 640px wide. IGDB: use t_cover_big.
+ */
+export function coverUrlForDialog(url: string): string {
+  if (!url) return url;
+  try {
+    if (url.includes("media.rawg.io/media/")) {
+      return url.replace("/media/", "/media/resize/640/-/");
+    }
+    if (url.includes("t_thumb")) {
+      return url.replace("t_thumb", "t_cover_big"); // 264x374 IGDB
+    }
+    if (url.includes("t_1080p")) {
+      return url.replace("t_1080p", "t_720p");
+    }
+  } catch {
+    // fall through
+  }
+  return url;
+}
+
 /**
  * Faz o fetch da api da RAWG.
  *

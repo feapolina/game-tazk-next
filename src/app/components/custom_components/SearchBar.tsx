@@ -8,6 +8,7 @@ import GameSkeleton from "./GameSkeleton";
 import { Button } from "@/app/components/ui/button";
 import { GameData } from "@/app/types";
 import TextType from "@/components/TextType";
+import { optimizeCoverUrl } from "@/app/apiService";
 
 interface SearchbarWithListProps {
   onAddGame: (game: GameData) => void;
@@ -114,8 +115,9 @@ export default function SearchbarWithList({
                 >
                   <div className="flex justify-center items-center space-x-3">
                     <img
-                      src={game.cover_url}
+                      src={optimizeCoverUrl(game.cover_url, 96)}
                       alt={game.name}
+                      loading="lazy"
                       className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                     />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
