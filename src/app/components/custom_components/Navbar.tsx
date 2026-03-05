@@ -8,7 +8,11 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { LogOut, User } from "lucide-react";
 
 import { ModeToggle } from "@/app/components/mode-toggle";
-import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/app/components/ui/avatar";
 import { Button } from "@/app/components/ui/button";
 import {
   DropdownMenu,
@@ -37,11 +41,13 @@ const getGradient = (name: string) => {
     "bg-gradient-to-br from-pink-500 via-rose-500 to-orange-500",
     "bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500",
   ];
-  
+
   if (!name) return gradients[0];
-  
+
   // Use sum of char codes to pick index
-  const charCodeSum = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const charCodeSum = name
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return gradients[charCodeSum % gradients.length];
 };
 
@@ -52,7 +58,9 @@ export default function Navbar({ transparent = false }: NavbarProps) {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user?.user_metadata?.full_name) {
         const firstName = user.user_metadata.full_name.split(" ")[0];
         setUserName(firstName);
@@ -68,12 +76,14 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   };
 
   return (
-    <nav className={cn(
-      "w-full relative flex items-center p-4 transition-colors duration-300",
-      transparent 
-        ? "bg-transparent border-transparent" 
-        : "bg-white/80 dark:bg-neutral-950/50 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800"
-    )}>
+    <nav
+      className={cn(
+        "w-full relative flex items-center p-4 transition-colors duration-300",
+        transparent
+          ? "bg-transparent border-transparent"
+          : "bg-white/80 dark:bg-neutral-950/50 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800",
+      )}
+    >
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <Image
           src="https://xnwjumqehhbrsbcupouv.supabase.co/storage/v1/object/public/nebula-images/Neb.png"
@@ -87,23 +97,30 @@ export default function Navbar({ transparent = false }: NavbarProps) {
         <ModeToggle />
         {transparent ? (
           <Link href="/login">
-            <Button variant="ghost" className="text-black hover:text-black/80 hover:bg-white/10 font-medium border-2 border-purple-500 cursor-pointer dark:text-white">
+            <Button
+              variant="ghost"
+              className="text-black hover:text-black/80 hover:bg-white/10 font-medium border-2 border-purple-500 cursor-pointer dark:text-white"
+            >
               Entrar
             </Button>
           </Link>
         ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 p-0 overflow-hidden cursor-pointer">
-                 <Avatar className="h-full w-full">
-                    <AvatarFallback 
-                      className={cn(
-                        "text-white font-medium",
-                        getGradient(userName)
-                      )}
-                    >
-                      {userName ? userName[0].toUpperCase() : "G"}
-                    </AvatarFallback>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full w-10 h-10 p-0 overflow-hidden cursor-pointer"
+              >
+                <Avatar className="h-full w-full">
+                  <AvatarFallback
+                    className={cn(
+                      "text-white font-medium",
+                      getGradient(userName),
+                    )}
+                  >
+                    {userName ? userName[0].toUpperCase() : "G"}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -112,7 +129,17 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                 {userName ? `Olá, ${userName}.` : "Minha Conta"}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-100 dark:focus:bg-red-900/20">
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/profile" className="flex items-center">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Meu Perfil</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-100 dark:focus:bg-red-900/20"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sair</span>
               </DropdownMenuItem>
