@@ -12,7 +12,8 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 
-import CountUp from "@/app/components/react-bits/CountUp";import { Button } from "@/app/components/ui/button";
+import CountUp from "@/app/components/react-bits/CountUp";
+import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 
 import Image from "next/image";
@@ -41,7 +42,10 @@ import {
   updateGameStatus,
   fetchTodoForGameFromDatabase,
 } from "./gameService";
-import { DraggableGameCard, GameCard } from "@/app/components/custom_components/DraggableGameCard";
+import {
+  DraggableGameCard,
+  GameCard,
+} from "@/app/components/custom_components/DraggableGameCard";
 import SearchbarWithList from "@/app/components/custom_components/SearchBar";
 import ToDoList from "@/app/components/custom_components/ToDoListComponent";
 import Footer from "@/app/components/custom_components/Footer";
@@ -61,14 +65,12 @@ export default function HomePage() {
   const [currentGame, setCurrentGame] = useState<GameData | null>(null);
   const [taskCount, setTaskCount] = useState(0);
   const [activeGame, setActiveGame] = useState<GameData | null>(null);
-  
+
   // New State for Platform Selection
   const [gameToAdd, setGameToAdd] = useState<GameData | null>(null);
   const [isPlatformDialogOpen, setIsPlatformDialogOpen] = useState(false);
   const [deletingGames, setDeletingGames] = useState<number[]>([]);
-  
 
-  
   // Mobile Detection
   const [isMobile, setIsMobile] = useState(false);
 
@@ -76,13 +78,13 @@ export default function HomePage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     // Check initially
     checkMobile();
-    
+
     // Add listener
     window.addEventListener("resize", checkMobile);
-    
+
     // Cleanup
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
@@ -90,15 +92,15 @@ export default function HomePage() {
   // Fetch count when game opens
   useEffect(() => {
     if (currentGame) {
-        fetchTodoForGameFromDatabase(currentGame.id).then((result) => {
-            if (result.success && result.data) {
-                setTaskCount(result.data.length);
-            } else {
-                setTaskCount(0);
-            }
-        });
+      fetchTodoForGameFromDatabase(currentGame.id).then((result) => {
+        if (result.success && result.data) {
+          setTaskCount(result.data.length);
+        } else {
+          setTaskCount(0);
+        }
+      });
     } else {
-        setTaskCount(0);
+      setTaskCount(0);
     }
   }, [currentGame]);
 
@@ -110,12 +112,10 @@ export default function HomePage() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
-// ... (rest of code) ...
-
-
+  // ... (rest of code) ...
 
   useEffect(() => {
     const loadGames = async () => {
@@ -126,7 +126,7 @@ export default function HomePage() {
           const games = result.data ?? [];
           setSelectedGames(games.filter((game) => game.status === "playing"));
           setWishlistSelectedGames(
-            games.filter((game) => game.status === "wishlist")
+            games.filter((game) => game.status === "wishlist"),
           );
         } else {
           console.error("Erro ao buscar jogos: ", result.error);
@@ -243,7 +243,9 @@ export default function HomePage() {
     setTimeout(async () => {
       const result = await deleteGameFromDatabase(id);
       if (result.success) {
-        setWishlistSelectedGames((prev) => prev.filter((game) => game.id !== id));
+        setWishlistSelectedGames((prev) =>
+          prev.filter((game) => game.id !== id),
+        );
         toast({
           title: "Jogo removido!",
           description: `${gameName} foi removido com sucesso da lista de desejos.`,
@@ -279,21 +281,25 @@ export default function HomePage() {
     // Find where the item came from
     const isFromPlaying = selectedGames.some((g) => g.id === activeId);
     const isFromWishlist = wishlistSelectedGames.some((g) => g.id === activeId);
-    
+
     // Find where appropriate item is going
     // NOTE: overId can be the container ID ("playing-list", "wishlist-list") OR a game ID inside that list.
-    
+
     let targetContainer: "playing" | "wishlist" | null = null;
 
     if (overId === "playing-list") targetContainer = "playing";
     else if (overId === "wishlist-list") targetContainer = "wishlist";
     else {
       // It's over another item, check which list that item belongs to
-       const isOverPlayingItem = selectedGames.some((g) => g.id === Number(overId));
-       const isOverWishlistItem = wishlistSelectedGames.some((g) => g.id === Number(overId));
-       
-       if (isOverPlayingItem) targetContainer = "playing";
-       else if (isOverWishlistItem) targetContainer = "wishlist";
+      const isOverPlayingItem = selectedGames.some(
+        (g) => g.id === Number(overId),
+      );
+      const isOverWishlistItem = wishlistSelectedGames.some(
+        (g) => g.id === Number(overId),
+      );
+
+      if (isOverPlayingItem) targetContainer = "playing";
+      else if (isOverWishlistItem) targetContainer = "wishlist";
     }
 
     if (!targetContainer) return; // Dropped somewhere unknown
@@ -311,15 +317,41 @@ export default function HomePage() {
 
     // Optimistic Update
     if (targetContainer === "playing") {
-        setWishlistSelectedGames(prev => prev.filter(g => g.id !== activeId));
-        setSelectedGames(prev => [...prev, {...gameToMove, status: "playing"} as GameData]); // status field update relies on local shape if it existed
+      setWishlistSelectedGames((prev) => prev.filter((g) => g.id !== activeId));
+      setSelectedGames((prev) => [
+        ...prev,
+        { ...gameToMove, status: "playing" } as GameData,
+      ]); // status field update relies on local shape if it existed
     } else {
-      setSelectedGames(prev => prev.filter(g => g.id !== activeId));
-        setWishlistSelectedGames(prev => [...prev, {...gameToMove, status: "wishlist"} as GameData]);
+      setSelectedGames((prev) => prev.filter((g) => g.id !== activeId));
+      setWishlistSelectedGames((prev) => [
+        ...prev,
+        { ...gameToMove, status: "wishlist" } as GameData,
+      ]);
     }
 
     // Backend Update
     await updateGameStatus(activeId, targetContainer);
+  };
+
+  const handleMarkFinished = async () => {
+    if (!currentGame) return;
+    const result = await updateGameStatus(currentGame.id, "finished");
+    if (result.success) {
+      setSelectedGames((prev) => prev.filter((g) => g.id !== currentGame.id));
+      setIsModalOpen(false);
+      setCurrentGame(null);
+      toast({
+        title: "Jogo finalizado! 🏆",
+        description: `${currentGame.name} foi marcado como finalizado.`,
+      });
+    } else {
+      toast({
+        title: "Erro ao finalizar jogo",
+        description: "Não foi possível atualizar o status do jogo.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -335,7 +367,6 @@ export default function HomePage() {
           <Navbar />
           <div className="container mx-auto px-4 flex flex-col justify-center items-center">
             {/* Old Logo Removed from here */}
-            
 
             <SearchbarWithList
               onAddGameToWishlist={handleAddGameToWishlist}
@@ -370,7 +401,11 @@ export default function HomePage() {
                             variant="playing"
                             disabled={isMobile}
                             onRemove={handleRemoveGame}
-                            className={deletingGames.includes(game.id) ? "opacity-0 scale-90 pointer-events-none" : ""}
+                            className={
+                              deletingGames.includes(game.id)
+                                ? "opacity-0 scale-90 pointer-events-none"
+                                : ""
+                            }
                             onClick={(g) => {
                               setCurrentGame(g);
                               setIsModalOpen(true);
@@ -396,27 +431,31 @@ export default function HomePage() {
                 <GameImageSkeletonGrid count={3} />
               ) : (
                 <DroppableContainer id="wishlist-list">
-                    <SortableContext
-                        items={wishlistSelectedGames.map((g) => g.id)}
-                        strategy={rectSortingStrategy}
-                    >
+                  <SortableContext
+                    items={wishlistSelectedGames.map((g) => g.id)}
+                    strategy={rectSortingStrategy}
+                  >
                     {wishlistSelectedGames.length === 0 ? (
-                        <EmptyListMessage />
+                      <EmptyListMessage />
                     ) : (
-                        <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
+                      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
                         {wishlistSelectedGames.map((game) => (
-                            <DraggableGameCard
+                          <DraggableGameCard
                             key={game.id}
                             game={game}
                             variant="wishlist"
                             disabled={isMobile}
                             onRemove={handleRemoveGameFromWishlist}
-                            className={deletingGames.includes(game.id) ? "opacity-0 scale-90 pointer-events-none" : ""}
-                            />
+                            className={
+                              deletingGames.includes(game.id)
+                                ? "opacity-0 scale-90 pointer-events-none"
+                                : ""
+                            }
+                          />
                         ))}
-                        </div>
+                      </div>
                     )}
-                    </SortableContext>
+                  </SortableContext>
                 </DroppableContainer>
               )}
             </div>
@@ -424,67 +463,79 @@ export default function HomePage() {
         </div>
 
         <DragOverlay>
-            {activeGame ? (
-                <GameCard 
-                    game={activeGame} 
-                    variant={activeGame.status as "playing" | "wishlist"} 
-                    isOverlay 
-                />
-            ) : null}
+          {activeGame ? (
+            <GameCard
+              game={activeGame}
+              variant={activeGame.status as "playing" | "wishlist"}
+              isOverlay
+            />
+          ) : null}
         </DragOverlay>
 
         <Dialog open={isModalOpen} onOpenChange={() => setIsModalOpen(false)}>
-          <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden bg-[#f5f5f5] dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-             <DialogHeader className="sr-only">
-               <DialogTitle>Lista de tarefas para {currentGame?.name}</DialogTitle>
-             </DialogHeader>
-             
-             {/* Custom Header Section */}
-             <div className="relative w-full h-56 bg-neutral-900">
-                {currentGame?.cover_url && (
-                    <img 
-                      src={currentGame.cover_url.replace("t_thumb", "t_1080p")} 
-                      alt={currentGame.name}
-                      className="w-full h-full object-cover opacity-90"
-                    />
-                )}
-                {/* Gradient Overlay (Darker at bottom) */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
-                
-                {/* Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-row items-end justify-between z-10">
-                    <div className="space-y-1">
-                        <Label className="text-white/60 text-xs font-medium uppercase tracking-wider">Gerenciando</Label>
-                        <h2 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-none">
-                            {currentGame?.name}
-                        </h2>
-                    </div>
-                    
-                    {/* Count Up Component */}
-                    <div className="flex flex-col items-end space-y-1">
-                        <span className="text-xs font-medium text-white/50 uppercase tracking-wider">Tarefas</span>
-                        <div className="text-4xl font-bold text-white tracking-tighter drop-shadow-lg leading-none">
-                            <CountUp
-                              from={0}
-                              to={taskCount}
-                              separator=","
-                              direction="up"
-                              duration={1}
-                              className="count-up-text"
-                            />
-                        </div>
-                    </div>
-                </div>
-             </div>
+          <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden bg-[#f5f5f5] dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 max-h-[90vh] flex flex-col">
+            <DialogHeader className="sr-only">
+              <DialogTitle>
+                Lista de tarefas para {currentGame?.name}
+              </DialogTitle>
+            </DialogHeader>
 
-            <div className="p-6">
-              <ToDoList gameId={currentGame?.id} />
+            {/* Custom Header Section */}
+            <div className="relative w-full h-56 bg-neutral-900">
+              {currentGame?.cover_url && (
+                <img
+                  src={currentGame.cover_url.replace("t_thumb", "t_1080p")}
+                  alt={currentGame.name}
+                  className="w-full h-full object-cover opacity-90"
+                />
+              )}
+              {/* Gradient Overlay (Darker at bottom) */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
+
+              {/* Content Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-row items-end justify-between z-10">
+                <div className="space-y-1">
+                  <Label className="text-white/60 text-xs font-medium uppercase tracking-wider">
+                    Gerenciando
+                  </Label>
+                  <h2 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-none">
+                    {currentGame?.name}
+                  </h2>
+                </div>
+
+                {/* Count Up Component */}
+                <div className="flex flex-col items-end space-y-1">
+                  <span className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                    Tarefas
+                  </span>
+                  <div className="text-4xl font-bold text-white tracking-tighter drop-shadow-lg leading-none">
+                    <CountUp
+                      from={0}
+                      to={taskCount}
+                      separator=","
+                      direction="up"
+                      duration={1}
+                      className="count-up-text"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <ToDoList
+                gameId={currentGame?.id}
+                onMarkFinished={currentGame ? handleMarkFinished : undefined}
+              />
             </div>
           </DialogContent>
         </Dialog>
 
         {/* Platform Selection Dialog */}
-        <Dialog open={isPlatformDialogOpen} onOpenChange={setIsPlatformDialogOpen}>
+        <Dialog
+          open={isPlatformDialogOpen}
+          onOpenChange={setIsPlatformDialogOpen}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Adicionar {gameToAdd?.name}</DialogTitle>
@@ -492,32 +543,32 @@ export default function HomePage() {
             <div className="grid w-full items-center gap-4">
               <Label className="text-center mb-2">Selecione a plataforma</Label>
               <div className="flex flex-wrap justify-center gap-4">
-                <Button 
-                  className="bg-neutral-500 hover:bg-neutral-600 text-white min-w-[100px]" 
+                <Button
+                  className="bg-neutral-500 hover:bg-neutral-600 text-white min-w-[100px]"
                   onClick={() => handleConfirmAddGame("PC")}
                 >
                   PC
                 </Button>
-                <Button 
-                  className="bg-blue-600 hover:bg-blue-700 text-white min-w-[100px]" 
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white min-w-[100px]"
                   onClick={() => handleConfirmAddGame("PlayStation")}
                 >
                   PlayStation
                 </Button>
-                <Button 
-                  className="bg-green-600 hover:bg-green-700 text-white min-w-[100px]" 
+                <Button
+                  className="bg-green-600 hover:bg-green-700 text-white min-w-[100px]"
                   onClick={() => handleConfirmAddGame("Xbox")}
                 >
                   Xbox
                 </Button>
-                <Button 
-                  className="bg-red-600 hover:bg-red-700 text-white min-w-[100px]" 
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white min-w-[100px]"
                   onClick={() => handleConfirmAddGame("Switch")}
                 >
                   Switch
                 </Button>
-                <Button 
-                  className="bg-neutral-900 hover:bg-black text-white min-w-[100px]" 
+                <Button
+                  className="bg-neutral-900 hover:bg-black text-white min-w-[100px]"
                   onClick={() => handleConfirmAddGame("Mobile")}
                 >
                   Mobile

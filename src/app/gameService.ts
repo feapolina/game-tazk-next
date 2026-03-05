@@ -6,7 +6,7 @@ const supabase = createClientComponentClient();
 export async function saveGameInDatabase(
   game: GameData,
   status: "playing" | "wishlist",
-  platform?: string
+  platform?: string,
 ) {
   try {
     const {
@@ -35,7 +35,7 @@ export async function saveGameInDatabase(
   } catch (exception) {
     console.log(
       "Erro ao tentar adicionar o jogo no banco de dados: ",
-      exception
+      exception,
     );
     return { success: false, error: "Ocorreu uma exceção." };
   }
@@ -46,7 +46,7 @@ export async function fetchGamesListFromDatabase() {
     const { data, error } = await supabase.from("games").select("*");
     if (error) {
       console.log(
-        "Houve um erro ao fazer o fetch dos jogos do banco de dados."
+        "Houve um erro ao fazer o fetch dos jogos do banco de dados.",
       );
       return { success: false, error: error.message };
     } else {
@@ -96,7 +96,7 @@ export async function saveTodoForGameOnDatabase(id: number, task: string) {
   } catch (exception) {
     console.log(
       "Houve uma exceção ao tentar salvar o todo no banco de dados: ",
-      exception
+      exception,
     );
     return { success: false, error: "Ocorreu uma exceção." };
   }
@@ -117,7 +117,7 @@ export async function fetchTodoForGameFromDatabase(id: number) {
   } catch (exception) {
     console.log(
       "Houve uma exceção ao tentar resgatar o todo do banco de dados: ",
-      exception
+      exception,
     );
     return { success: false, error: "Ocorreu uma exceção." };
   }
@@ -138,7 +138,7 @@ export async function toggleTodoDone(todoId: number, isCompleted: boolean) {
   } catch (exception) {
     console.log(
       "Houve uma exceção ao tentar alterar o estado do item todo no banco de dados: ",
-      exception
+      exception,
     );
     return { success: false, error: "Ocorreu uma exceção." };
   }
@@ -159,7 +159,7 @@ export async function deleteTodoFromDatabase(todoId: number) {
   } catch (exception) {
     console.log(
       "Houve uma exceção ao tentar deletar o item todo do banco de dados: ",
-      exception
+      exception,
     );
     return { success: false, error: "Ocorreu uma exceção." };
   }
@@ -167,7 +167,7 @@ export async function deleteTodoFromDatabase(todoId: number) {
 
 export async function updateGameStatus(
   id: number,
-  status: "playing" | "wishlist"
+  status: "playing" | "wishlist" | "finished",
 ) {
   try {
     const { error } = await supabase
@@ -182,7 +182,7 @@ export async function updateGameStatus(
   } catch (exception) {
     console.log(
       "Erro ao tentar atualizar o status do jogo no banco de dados: ",
-      exception
+      exception,
     );
     return { success: false, error: "Ocorreu uma exceção." };
   }

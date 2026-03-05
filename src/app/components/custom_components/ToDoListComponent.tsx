@@ -6,6 +6,8 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
+  NotebookPen,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -26,9 +28,10 @@ interface Task {
 
 interface ToDoListProps {
   gameId: number | undefined;
+  onMarkFinished?: () => void;
 }
 
-export default function ToDoList({ gameId }: ToDoListProps) {
+export default function ToDoList({ gameId, onMarkFinished }: ToDoListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState<string>("");
   const [isCompletedOpen, setIsCompletedOpen] = useState(false);
@@ -81,6 +84,32 @@ export default function ToDoList({ gameId }: ToDoListProps) {
   return (
     <div className="w-full">
       <div className="p-0">
+        <div className="flex flex-row flex-wrap gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => {
+              /* TODO: open Caderno */
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 bg-orange-500/15 text-orange-400 border border-orange-500/30 hover:bg-orange-500/25 hover:border-orange-500/60 hover:text-orange-300 hover:shadow-[0_0_12px_rgba(249,115,22,0.25)] active:scale-95"
+          >
+            <NotebookPen className="h-3.5 w-3.5" />
+            Caderno
+          </button>
+
+          <button
+            type="button"
+            onClick={onMarkFinished}
+            disabled={!onMarkFinished}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/60 hover:text-emerald-300 hover:shadow-[0_0_12px_rgba(52,211,153,0.25)] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Trophy className="h-3.5 w-3.5" />
+            Marcar como finalizado
+          </button>
+        </div>
+
+        {/* Divider */}
+        <hr className="border-t border-neutral-800 mb-4" />
+
         <form onSubmit={addTask} className="flex gap-2 mb-4">
           <Input
             type="text"
@@ -93,12 +122,12 @@ export default function ToDoList({ gameId }: ToDoListProps) {
             <Plus className="h-4 w-4" />
           </Button>
         </form>
-        <ScrollArea className="h-[50vh] w-full pr-4">
+        <ScrollArea className="w-full pr-4">
           <div className="space-y-2">
             {activeTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 group"
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 group min-w-0"
               >
                 <button
                   onClick={() => toggleTask(task.id, task.isCompleted)}
@@ -107,7 +136,7 @@ export default function ToDoList({ gameId }: ToDoListProps) {
                 >
                   <Circle className="h-5 w-5 cursor-pointer" />
                 </button>
-                <span className="flex-1 text-neutral-700 dark:text-neutral-200">
+                <span className="flex-1 min-w-0 truncate text-neutral-700 dark:text-neutral-200">
                   {task.task}
                 </span>
                 <Button
@@ -149,7 +178,7 @@ export default function ToDoList({ gameId }: ToDoListProps) {
                         >
                           <CheckCircle2 className="h-5 w-5 text-green-500 cursor-pointer" />
                         </button>
-                        <span className="flex-1 line-through text-slate-500">
+                        <span className="flex-1 min-w-0 truncate line-through text-slate-500">
                           {task.task}
                         </span>
                         <Button
