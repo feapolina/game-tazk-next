@@ -167,7 +167,7 @@ export async function deleteTodoFromDatabase(todoId: number) {
 
 export async function updateGameStatus(
   id: number,
-  status: "playing" | "wishlist" | "finished",
+  status: "playing" | "wishlist" | "finished" | "platinated",
 ) {
   try {
     const { error } = await supabase

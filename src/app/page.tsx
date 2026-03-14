@@ -72,6 +72,9 @@ export default function HomePage() {
   const [isPlatformDialogOpen, setIsPlatformDialogOpen] = useState(false);
   const [deletingGames, setDeletingGames] = useState<number[]>([]);
 
+  // Tracks rawg_ids of ALL user games (any status) to prevent duplicates
+  const [existingRawgIds, setExistingRawgIds] = useState<Set<number>>(new Set());
+
   // Mobile Detection
   const [isMobile, setIsMobile] = useState(false);
 
@@ -129,6 +132,10 @@ export default function HomePage() {
           setWishlistSelectedGames(
             games.filter((game) => game.status === "wishlist"),
           );
+          // Build a Set of ALL rawg_ids the user already owns (any status)
+          setExistingRawgIds(
+            new Set(games.map((g) => (g as any).rawg_id as number).filter(Boolean))
+          );
         } else {
           console.error("Erro ao buscar jogos: ", result.error);
           toast({
@@ -147,7 +154,15 @@ export default function HomePage() {
   }, [toast]);
 
   const handleAddGame = async (gameFromSearch: GameData) => {
-    // Instead of saving immediately, open the platform dialog
+    // Duplicate guard: game.id from RAWG search = rawg_id in DB
+    if (existingRawgIds.has(gameFromSearch.id)) {
+      toast({
+        title: "Jogo já adicionado",
+        description: `${gameFromSearch.name} já está na sua biblioteca.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setGameToAdd(gameFromSearch);
     setIsPlatformDialogOpen(true);
   };
@@ -165,6 +180,8 @@ export default function HomePage() {
           platform: platform,
         },
       ]);
+      // Keep the rawg_id Set in sync so re-adding is blocked in the same session
+      setExistingRawgIds((prev) => new Set([...prev, gameToAdd.id]));
       toast({
         title: "Jogo adicionado!",
         description: `${gameToAdd.name} foi adicionado na plataforma ${platform}.`,
@@ -181,6 +198,16 @@ export default function HomePage() {
   };
 
   const handleAddGameToWishlist = async (gameFromSearch: GameData) => {
+    // Duplicate guard
+    if (existingRawgIds.has(gameFromSearch.id)) {
+      toast({
+        title: "Jogo já adicionado",
+        description: `${gameFromSearch.name} já está na sua biblioteca.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const result = await saveGameInDatabase(gameFromSearch, "wishlist");
     if (result.success) {
       setWishlistSelectedGames((prev) => [
@@ -190,6 +217,8 @@ export default function HomePage() {
           cover_url: gameFromSearch.cover_url,
         },
       ]);
+      // Keep the rawg_id Set in sync
+      setExistingRawgIds((prev) => new Set([...prev, gameFromSearch.id]));
       toast({
         title: "Jogo adicionado!",
         description: `${gameFromSearch.name} foi adicionado.`,
@@ -349,6 +378,26 @@ export default function HomePage() {
     } else {
       toast({
         title: "Erro ao finalizar jogo",
+        description: "Não foi possível atualizar o status do jogo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkPlatinated = async () => {
+    if (!currentGame) return;
+    const result = await updateGameStatus(currentGame.id, "platinated");
+    if (result.success) {
+      setSelectedGames((prev) => prev.filter((g) => g.id !== currentGame.id));
+      setIsModalOpen(false);
+      setCurrentGame(null);
+      toast({
+        title: "Jogo platinado! 💎",
+        description: `${currentGame.name} foi marcado como platinado. Muito bem!`,
+      });
+    } else {
+      toast({
+        title: "Erro ao platinar jogo",
         description: "Não foi possível atualizar o status do jogo.",
         variant: "destructive",
       });
@@ -527,6 +576,7 @@ export default function HomePage() {
               <ToDoList
                 gameId={currentGame?.id}
                 onMarkFinished={currentGame ? handleMarkFinished : undefined}
+                onMarkPlatinated={currentGame ? handleMarkPlatinated : undefined}
               />
             </div>
           </DialogContent>

@@ -8,6 +8,7 @@ import {
   ChevronRight,
   NotebookPen,
   Trophy,
+  Gem,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -29,9 +30,10 @@ interface Task {
 interface ToDoListProps {
   gameId: number | undefined;
   onMarkFinished?: () => void;
+  onMarkPlatinated?: () => void;
 }
 
-export default function ToDoList({ gameId, onMarkFinished }: ToDoListProps) {
+export default function ToDoList({ gameId, onMarkFinished, onMarkPlatinated }: ToDoListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState<string>("");
   const [isCompletedOpen, setIsCompletedOpen] = useState(false);
@@ -104,6 +106,16 @@ export default function ToDoList({ gameId, onMarkFinished }: ToDoListProps) {
           >
             <Trophy className="h-3.5 w-3.5" />
             Marcar como finalizado
+          </button>
+
+          <button
+            type="button"
+            onClick={onMarkPlatinated}
+            disabled={!onMarkPlatinated}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 bg-sky-500/15 text-sky-300 border border-sky-500/30 hover:bg-sky-500/25 hover:border-sky-500/60 hover:text-sky-200 hover:shadow-[0_0_12px_rgba(56,189,248,0.25)] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Gem className="h-3.5 w-3.5" />
+            Marcar como platinado
           </button>
         </div>
 

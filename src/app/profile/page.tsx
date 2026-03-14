@@ -20,6 +20,7 @@ import {
   ImageIcon,
   Search,
   CheckCircle2,
+  Gem,
 } from "lucide-react";
 import { useToast } from "@/app/hooks/use-toast";
 import { Toaster } from "@/app/components/ui/toaster";
@@ -34,7 +35,11 @@ import Navbar from "@/app/components/custom_components/Navbar";
 import Footer from "@/app/components/custom_components/Footer";
 import { fetchGamesListFromDatabase } from "@/app/gameService";
 import { GameData } from "@/app/types";
-import { optimizeCoverUrl, searchGamesRAWG, fetchGameScreenshots } from "@/app/apiService";
+import {
+  optimizeCoverUrl,
+  searchGamesRAWG,
+  fetchGameScreenshots,
+} from "@/app/apiService";
 import {
   Dialog,
   DialogContent,
@@ -144,10 +149,14 @@ function MiniGameCard({
   game,
   badge,
   onUnfinish,
+  onPlatinate,
+  onUnplatinate,
 }: {
   game: GameData;
   badge?: React.ReactNode;
   onUnfinish?: (game: GameData) => void;
+  onPlatinate?: (game: GameData) => void;
+  onUnplatinate?: (game: GameData) => void;
 }) {
   const platform = getPlatformBadge(game.platform);
   return (
@@ -178,16 +187,39 @@ function MiniGameCard({
 
       {badge && <div className="absolute top-2 right-2">{badge}</div>}
 
-      {onUnfinish && (
-        <button
-          onClick={() => onUnfinish(game)}
-          title="Desfazer finalização"
-          className="absolute bottom-10 right-2 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-amber-300 bg-black/70 border border-amber-400/40 hover:bg-amber-500/20 hover:border-amber-400/70 hover:text-amber-200 backdrop-blur-sm cursor-pointer"
-        >
-          <Undo2 className="h-3 w-3" />
-          Desfazer
-        </button>
-      )}
+      {/* Hover action buttons — stack vertically at bottom-right */}
+      <div className="absolute bottom-10 right-2 flex flex-col gap-1 items-end">
+        {onUnfinish && (
+          <button
+            onClick={() => onUnfinish(game)}
+            title="Desfazer finalização"
+            className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-amber-300 bg-black/70 border border-amber-400/40 hover:bg-amber-500/20 hover:border-amber-400/70 hover:text-amber-200 backdrop-blur-sm cursor-pointer"
+          >
+            <Undo2 className="h-3 w-3" />
+            Desfazer
+          </button>
+        )}
+        {onPlatinate && (
+          <button
+            onClick={() => onPlatinate(game)}
+            title="Marcar como platinado"
+            className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-sky-300 bg-black/70 border border-sky-400/40 hover:bg-sky-500/20 hover:border-sky-400/70 hover:text-sky-200 backdrop-blur-sm cursor-pointer"
+          >
+            <Gem className="h-3 w-3" />
+            Platinar
+          </button>
+        )}
+        {onUnplatinate && (
+          <button
+            onClick={() => onUnplatinate(game)}
+            title="Desfazer platina"
+            className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-amber-300 bg-black/70 border border-amber-400/40 hover:bg-amber-500/20 hover:border-amber-400/70 hover:text-amber-200 backdrop-blur-sm cursor-pointer"
+          >
+            <Undo2 className="h-3 w-3" />
+            Desfazer platina
+          </button>
+        )}
+      </div>
 
       <p className="absolute bottom-3 left-3 right-3 text-white font-semibold text-sm leading-tight line-clamp-2 drop-shadow-lg">
         {game.name}
@@ -228,15 +260,26 @@ function GameGrid({
   games,
   badge,
   onUnfinish,
+  onPlatinate,
+  onUnplatinate,
 }: {
   games: GameData[];
   badge?: (g: GameData) => React.ReactNode;
   onUnfinish?: (game: GameData) => void;
+  onPlatinate?: (game: GameData) => void;
+  onUnplatinate?: (game: GameData) => void;
 }) {
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
       {games.map((g) => (
-        <MiniGameCard key={g.id} game={g} badge={badge?.(g)} onUnfinish={onUnfinish} />
+        <MiniGameCard
+          key={g.id}
+          game={g}
+          badge={badge?.(g)}
+          onUnfinish={onUnfinish}
+          onPlatinate={onPlatinate}
+          onUnplatinate={onUnplatinate}
+        />
       ))}
     </div>
   );
@@ -278,7 +321,11 @@ interface CoverPickerDialogProps {
   onSelect: (url: string) => void;
 }
 
-function CoverPickerDialog({ open, onOpenChange, onSelect }: CoverPickerDialogProps) {
+function CoverPickerDialog({
+  open,
+  onOpenChange,
+  onSelect,
+}: CoverPickerDialogProps) {
   const [query, setQuery] = useState("");
   const [gameResults, setGameResults] = useState<GameData[]>([]);
   const [selectedGame, setSelectedGame] = useState<GameData | null>(null);
@@ -413,7 +460,9 @@ function CoverPickerDialog({ open, onOpenChange, onSelect }: CoverPickerDialogPr
               {!query.trim() && (
                 <div className="flex flex-col items-center justify-center py-10 text-neutral-600 gap-3">
                   <Gamepad2 className="h-10 w-10 opacity-30" />
-                  <p className="text-sm">Digite o nome de um jogo para ver os wallpapers.</p>
+                  <p className="text-sm">
+                    Digite o nome de um jogo para ver os wallpapers.
+                  </p>
                 </div>
               )}
             </div>
@@ -423,13 +472,18 @@ function CoverPickerDialog({ open, onOpenChange, onSelect }: CoverPickerDialogPr
           {selectedGame && (
             <div className="px-6 py-4">
               <button
-                onClick={() => { setSelectedGame(null); setScreenshots([]); setPickedUrl(null); }}
+                onClick={() => {
+                  setSelectedGame(null);
+                  setScreenshots([]);
+                  setPickedUrl(null);
+                }}
                 className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 mb-4 transition-colors cursor-pointer"
               >
                 ← Voltar para busca
               </button>
               <p className="text-sm font-semibold text-white mb-3">
-                Wallpapers de <span className="text-violet-400">{selectedGame.name}</span>
+                Wallpapers de{" "}
+                <span className="text-violet-400">{selectedGame.name}</span>
               </p>
 
               {screenshotsLoading && (
@@ -442,7 +496,9 @@ function CoverPickerDialog({ open, onOpenChange, onSelect }: CoverPickerDialogPr
               {!screenshotsLoading && screenshots.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-10 text-neutral-600 gap-2">
                   <ImageIcon className="h-8 w-8 opacity-40" />
-                  <p className="text-sm">Nenhum wallpaper disponível para este jogo.</p>
+                  <p className="text-sm">
+                    Nenhum wallpaper disponível para este jogo.
+                  </p>
                 </div>
               )}
 
@@ -481,7 +537,9 @@ function CoverPickerDialog({ open, onOpenChange, onSelect }: CoverPickerDialogPr
         {/* Footer actions */}
         <div className="px-6 py-4 border-t border-neutral-800 shrink-0 flex items-center justify-between gap-3">
           <p className="text-xs text-neutral-500">
-            {pickedUrl ? "Wallpaper selecionado ✓" : "Selecione um wallpaper acima"}
+            {pickedUrl
+              ? "Wallpaper selecionado ✓"
+              : "Selecione um wallpaper acima"}
           </p>
           <div className="flex gap-2">
             <button
@@ -494,7 +552,12 @@ function CoverPickerDialog({ open, onOpenChange, onSelect }: CoverPickerDialogPr
               onClick={handleConfirm}
               disabled={!pickedUrl}
               className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: pickedUrl ? "linear-gradient(135deg,#7c3aed,#4f46e5)" : undefined, backgroundColor: pickedUrl ? undefined : "#3f3f46" }}
+              style={{
+                background: pickedUrl
+                  ? "linear-gradient(135deg,#7c3aed,#4f46e5)"
+                  : undefined,
+                backgroundColor: pickedUrl ? undefined : "#3f3f46",
+              }}
             >
               Aplicar capa
             </button>
@@ -527,6 +590,7 @@ export default function ProfilePage() {
   const [playing, setPlaying] = useState<GameData[]>([]);
   const [wishlist, setWishlist] = useState<GameData[]>([]);
   const [finished, setFinished] = useState<GameData[]>([]);
+  const [platinated, setPlatinated] = useState<GameData[]>([]);
 
   useEffect(() => {
     const init = async () => {
@@ -554,6 +618,7 @@ export default function ProfilePage() {
         setPlaying(all.filter((g) => g.status === "playing"));
         setWishlist(all.filter((g) => g.status === "wishlist"));
         setFinished(all.filter((g) => g.status === "finished"));
+        setPlatinated(all.filter((g) => g.status === "platinated"));
       }
 
       setLoading(false);
@@ -567,7 +632,6 @@ export default function ProfilePage() {
   };
 
   const handleUnfinishGame = async (game: GameData) => {
-    // Optimistic update: move immediately from finished -> playing in local state
     setFinished((prev) => prev.filter((g) => g.id !== game.id));
     setPlaying((prev) => [...prev, { ...game, status: "playing" }]);
 
@@ -578,11 +642,54 @@ export default function ProfilePage() {
         description: `${game.name} foi movido de volta para "Jogando Agora".`,
       });
     } else {
-      // Rollback on failure
       setPlaying((prev) => prev.filter((g) => g.id !== game.id));
       setFinished((prev) => [...prev, { ...game, status: "finished" }]);
       toast({
         title: "Erro ao desfazer finalização",
+        description: "Não foi possível atualizar o status do jogo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePlatinateGame = async (game: GameData) => {
+    // finished -> platinated
+    setFinished((prev) => prev.filter((g) => g.id !== game.id));
+    setPlatinated((prev) => [...prev, { ...game, status: "platinated" }]);
+
+    const result = await updateGameStatus(game.id, "platinated");
+    if (result.success) {
+      toast({
+        title: "Jogo platinado! 💎",
+        description: `${game.name} foi marcado como platinado. Muito bem!`,
+      });
+    } else {
+      setPlatinated((prev) => prev.filter((g) => g.id !== game.id));
+      setFinished((prev) => [...prev, { ...game, status: "finished" }]);
+      toast({
+        title: "Erro ao platinar jogo",
+        description: "Não foi possível atualizar o status do jogo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnplatinateGame = async (game: GameData) => {
+    // platinated -> finished
+    setPlatinated((prev) => prev.filter((g) => g.id !== game.id));
+    setFinished((prev) => [...prev, { ...game, status: "finished" }]);
+
+    const result = await updateGameStatus(game.id, "finished");
+    if (result.success) {
+      toast({
+        title: "Platina desfeita",
+        description: `${game.name} foi movido de volta para "Finalizados".`,
+      });
+    } else {
+      setFinished((prev) => prev.filter((g) => g.id !== game.id));
+      setPlatinated((prev) => [...prev, { ...game, status: "platinated" }]);
+      toast({
+        title: "Erro ao desfazer platina",
         description: "Não foi possível atualizar o status do jogo.",
         variant: "destructive",
       });
@@ -644,7 +751,8 @@ export default function ProfilePage() {
   const [c0, c1, c2] = getGradientColors(firstName);
   const avatarGradient = `linear-gradient(135deg, ${c0}, ${c1}, ${c2})`;
   const bannerGradient = `linear-gradient(135deg, ${c0}30, ${c1}20, transparent)`;
-  const totalGames = playing.length + wishlist.length + finished.length;
+  const totalGames =
+    playing.length + wishlist.length + finished.length + platinated.length;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
@@ -660,7 +768,10 @@ export default function ProfilePage() {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full" style={{ background: bannerGradient }} />
+          <div
+            className="w-full h-full"
+            style={{ background: bannerGradient }}
+          />
         )}
         {/* Dark gradient at bottom so the profile card blends in */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-neutral-950/60" />
@@ -784,7 +895,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-10">
           <StatCard
             icon={Layers}
             label="Total de jogos"
@@ -802,6 +913,12 @@ export default function ProfilePage() {
             label="Finalizados"
             value={finished.length}
             accent="#10b981"
+          />
+          <StatCard
+            icon={Gem}
+            label="Platinados"
+            value={platinated.length}
+            accent="#38bdf8"
           />
           <StatCard
             icon={Heart}
@@ -844,12 +961,41 @@ export default function ProfilePage() {
             <GameGrid
               games={finished}
               onUnfinish={handleUnfinishGame}
+              onPlatinate={handlePlatinateGame}
               badge={() => (
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg"
                   style={{ background: "rgba(16,185,129,0.85)" }}
                 >
                   <Trophy className="h-3 w-3 text-white" />
+                </div>
+              )}
+            />
+          )}
+        </section>
+
+        {/* ── Platinados ── */}
+        <section className="mb-10">
+          <SectionHeader
+            icon={Gem}
+            title="Platinados"
+            count={platinated.length}
+            accent="#38bdf8"
+          />
+          {loading ? (
+            <SkeletonGrid count={3} />
+          ) : platinated.length === 0 ? (
+            <EmptySection message="Nenhum jogo platinado ainda. Bora conseguir a platina! 💎" />
+          ) : (
+            <GameGrid
+              games={platinated}
+              onUnplatinate={handleUnplatinateGame}
+              badge={() => (
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg"
+                  style={{ background: "rgba(56,189,248,0.9)" }}
+                >
+                  <Gem className="h-3 w-3 text-white" />
                 </div>
               )}
             />
