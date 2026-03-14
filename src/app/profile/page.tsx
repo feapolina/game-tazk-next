@@ -16,7 +16,11 @@ import {
   Camera,
   Loader2,
   Home,
+  Undo2,
 } from "lucide-react";
+import { useToast } from "@/app/hooks/use-toast";
+import { Toaster } from "@/app/components/ui/toaster";
+import { updateGameStatus } from "@/app/gameService";
 import { uploadProfilePicture, getAvatarUrl } from "@/app/lib/avatarService";
 import Navbar from "@/app/components/custom_components/Navbar";
 import Footer from "@/app/components/custom_components/Footer";
@@ -124,9 +128,11 @@ function StatCard({
 function MiniGameCard({
   game,
   badge,
+  onUnfinish,
 }: {
   game: GameData;
   badge?: React.ReactNode;
+  onUnfinish?: (game: GameData) => void;
 }) {
   const platform = getPlatformBadge(game.platform);
   return (
@@ -156,6 +162,17 @@ function MiniGameCard({
       )}
 
       {badge && <div className="absolute top-2 right-2">{badge}</div>}
+
+      {onUnfinish && (
+        <button
+          onClick={() => onUnfinish(game)}
+          title="Desfazer finalização"
+          className="absolute bottom-10 right-2 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-amber-300 bg-black/70 border border-amber-400/40 hover:bg-amber-500/20 hover:border-amber-400/70 hover:text-amber-200 backdrop-blur-sm cursor-pointer"
+        >
+          <Undo2 className="h-3 w-3" />
+          Desfazer
+        </button>
+      )}
 
       <p className="absolute bottom-3 left-3 right-3 text-white font-semibold text-sm leading-tight line-clamp-2 drop-shadow-lg">
         {game.name}
@@ -195,14 +212,16 @@ function SectionHeader({
 function GameGrid({
   games,
   badge,
+  onUnfinish,
 }: {
   games: GameData[];
   badge?: (g: GameData) => React.ReactNode;
+  onUnfinish?: (game: GameData) => void;
 }) {
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
       {games.map((g) => (
-        <MiniGameCard key={g.id} game={g} badge={badge?.(g)} />
+        <MiniGameCard key={g.id} game={g} badge={badge?.(g)} onUnfinish={onUnfinish} />
       ))}
     </div>
   );
@@ -239,6 +258,7 @@ function EmptySection({ message }: { message: string }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
+  const { toast } = useToast();
   const supabase = createClientComponentClient();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -293,6 +313,29 @@ export default function ProfilePage() {
     router.push("/welcome");
   };
 
+  const handleUnfinishGame = async (game: GameData) => {
+    // Optimistic update: move immediately from finished -> playing in local state
+    setFinished((prev) => prev.filter((g) => g.id !== game.id));
+    setPlaying((prev) => [...prev, { ...game, status: "playing" }]);
+
+    const result = await updateGameStatus(game.id, "playing");
+    if (result.success) {
+      toast({
+        title: "Jogo reativado! 🎮",
+        description: `${game.name} foi movido de volta para "Jogando Agora".`,
+      });
+    } else {
+      // Rollback on failure
+      setPlaying((prev) => prev.filter((g) => g.id !== game.id));
+      setFinished((prev) => [...prev, { ...game, status: "finished" }]);
+      toast({
+        title: "Erro ao desfazer finalização",
+        description: "Não foi possível atualizar o status do jogo.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAvatarClick = () => {
     if (!uploading) fileInputRef.current?.click();
   };
@@ -335,6 +378,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
+      <Toaster />
       <Navbar />
 
       {/* ── Banner ── */}
@@ -506,6 +550,7 @@ export default function ProfilePage() {
           ) : (
             <GameGrid
               games={finished}
+              onUnfinish={handleUnfinishGame}
               badge={() => (
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg"
