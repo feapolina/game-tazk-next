@@ -143,3 +143,27 @@ export function getAvatarUrl(
 ): string | null {
   return user?.user_metadata?.avatar_url ?? null;
 }
+
+/**
+ * Returns the stored profile cover URL for the current user, or null if none.
+ */
+export function getCoverUrl(
+  user: { user_metadata?: { cover_url?: string } } | null,
+): string | null {
+  return user?.user_metadata?.cover_url ?? null;
+}
+
+/**
+ * Persists a wallpaper URL as the user's profile cover in Supabase user metadata.
+ */
+export async function saveCoverUrl(
+  url: string,
+  supabase: SupabaseClient,
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.auth.updateUser({ data: { cover_url: url } });
+  if (error) {
+    console.error("Failed to save cover URL:", error);
+    return { success: false, error: "Não foi possível salvar a capa." };
+  }
+  return { success: true };
+}

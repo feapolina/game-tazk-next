@@ -71,3 +71,15 @@ export async function searchGamesRAWG(query: string): Promise<GameData[]> {
     cover_url: game.background_image,
   }));
 }
+
+/**
+ * Fetches screenshots for a specific game by its RAWG ID.
+ * Returns an array of image URLs suitable for use as wallpapers.
+ */
+export async function fetchGameScreenshots(gameId: number): Promise<string[]> {
+  const url = `${BASE_URL}/${gameId}/screenshots?key=${API_KEY}&page_size=18`;
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  const json = await res.json();
+  return (json.results ?? []).map((s: any) => s.image as string);
+}

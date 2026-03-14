@@ -17,16 +17,31 @@ import {
   Loader2,
   Home,
   Undo2,
+  ImageIcon,
+  Search,
+  CheckCircle2,
 } from "lucide-react";
 import { useToast } from "@/app/hooks/use-toast";
 import { Toaster } from "@/app/components/ui/toaster";
 import { updateGameStatus } from "@/app/gameService";
-import { uploadProfilePicture, getAvatarUrl } from "@/app/lib/avatarService";
+import {
+  uploadProfilePicture,
+  getAvatarUrl,
+  getCoverUrl,
+  saveCoverUrl,
+} from "@/app/lib/avatarService";
 import Navbar from "@/app/components/custom_components/Navbar";
 import Footer from "@/app/components/custom_components/Footer";
 import { fetchGamesListFromDatabase } from "@/app/gameService";
 import { GameData } from "@/app/types";
-import { optimizeCoverUrl } from "@/app/apiService";
+import { optimizeCoverUrl, searchGamesRAWG, fetchGameScreenshots } from "@/app/apiService";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/app/components/ui/dialog";
+import { Input } from "@/app/components/ui/input";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -255,6 +270,241 @@ function EmptySection({ message }: { message: string }) {
   );
 }
 
+// ─── Cover Picker Dialog ─────────────────────────────────────────────────────
+
+interface CoverPickerDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (url: string) => void;
+}
+
+function CoverPickerDialog({ open, onOpenChange, onSelect }: CoverPickerDialogProps) {
+  const [query, setQuery] = useState("");
+  const [gameResults, setGameResults] = useState<GameData[]>([]);
+  const [selectedGame, setSelectedGame] = useState<GameData | null>(null);
+  const [screenshots, setScreenshots] = useState<string[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [screenshotsLoading, setScreenshotsLoading] = useState(false);
+  const [pickedUrl, setPickedUrl] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      setGameResults([]);
+      setSelectedGame(null);
+      setScreenshots([]);
+      setPickedUrl(null);
+    }
+  }, [open]);
+
+  // Debounced game search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!query.trim()) {
+      setGameResults([]);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      const results = await searchGamesRAWG(query.trim());
+      setGameResults(results.slice(0, 8));
+      setSearchLoading(false);
+    }, 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
+
+  const handleSelectGame = async (game: GameData) => {
+    setSelectedGame(game);
+    setScreenshots([]);
+    setPickedUrl(null);
+    setScreenshotsLoading(true);
+    const shots = await fetchGameScreenshots(game.id);
+    // Also include the game's own cover as the first option
+    const all = game.cover_url ? [game.cover_url, ...shots] : shots;
+    setScreenshots(all);
+    setScreenshotsLoading(false);
+  };
+
+  const handleConfirm = () => {
+    if (pickedUrl) {
+      onSelect(pickedUrl);
+      onOpenChange(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl bg-neutral-900 border-neutral-800 text-white p-0 overflow-hidden flex flex-col max-h-[85vh]">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-neutral-800 shrink-0">
+          <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+            <ImageIcon className="h-5 w-5 text-violet-400" />
+            Escolher capa do perfil
+          </DialogTitle>
+          <p className="text-sm text-neutral-400 mt-1">
+            Pesquise um jogo e escolha um dos wallpapers.
+          </p>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto">
+          {/* Search Input */}
+          <div className="px-6 py-4 border-b border-neutral-800/60">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+              <Input
+                placeholder="Buscar um jogo..."
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSelectedGame(null);
+                  setScreenshots([]);
+                }}
+                className="pl-9 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus-visible:ring-violet-500/50"
+              />
+            </div>
+          </div>
+
+          {/* Game Results */}
+          {!selectedGame && (
+            <div className="px-6 py-4">
+              {searchLoading && (
+                <div className="flex items-center justify-center py-8 gap-2 text-neutral-500">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Buscando jogos...</span>
+                </div>
+              )}
+              {!searchLoading && gameResults.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {gameResults.map((game) => (
+                    <button
+                      key={game.id}
+                      onClick={() => handleSelectGame(game)}
+                      className="group relative rounded-xl overflow-hidden border-2 border-neutral-700 hover:border-violet-500 transition-all duration-200 cursor-pointer"
+                      style={{ aspectRatio: "3/4" }}
+                    >
+                      {game.cover_url ? (
+                        <img
+                          src={optimizeCoverUrl(game.cover_url, 200)}
+                          alt={game.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
+                          <Gamepad2 className="h-8 w-8 text-neutral-600" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                      <p className="absolute bottom-2 left-2 right-2 text-white text-xs font-semibold line-clamp-2 leading-tight">
+                        {game.name}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!searchLoading && query.trim() && gameResults.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-10 text-neutral-500 gap-2">
+                  <Search className="h-8 w-8 opacity-40" />
+                  <p className="text-sm">Nenhum jogo encontrado.</p>
+                </div>
+              )}
+              {!query.trim() && (
+                <div className="flex flex-col items-center justify-center py-10 text-neutral-600 gap-3">
+                  <Gamepad2 className="h-10 w-10 opacity-30" />
+                  <p className="text-sm">Digite o nome de um jogo para ver os wallpapers.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Screenshots Grid */}
+          {selectedGame && (
+            <div className="px-6 py-4">
+              <button
+                onClick={() => { setSelectedGame(null); setScreenshots([]); setPickedUrl(null); }}
+                className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 mb-4 transition-colors cursor-pointer"
+              >
+                ← Voltar para busca
+              </button>
+              <p className="text-sm font-semibold text-white mb-3">
+                Wallpapers de <span className="text-violet-400">{selectedGame.name}</span>
+              </p>
+
+              {screenshotsLoading && (
+                <div className="flex items-center justify-center py-10 gap-2 text-neutral-500">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Carregando wallpapers...</span>
+                </div>
+              )}
+
+              {!screenshotsLoading && screenshots.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-10 text-neutral-600 gap-2">
+                  <ImageIcon className="h-8 w-8 opacity-40" />
+                  <p className="text-sm">Nenhum wallpaper disponível para este jogo.</p>
+                </div>
+              )}
+
+              {!screenshotsLoading && screenshots.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {screenshots.map((url, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setPickedUrl(url)}
+                      className={`group relative rounded-xl overflow-hidden border-2 transition-all duration-200 cursor-pointer ${
+                        pickedUrl === url
+                          ? "border-violet-500 ring-2 ring-violet-500/30"
+                          : "border-neutral-700 hover:border-violet-400"
+                      }`}
+                      style={{ aspectRatio: "16/9" }}
+                    >
+                      <img
+                        src={url}
+                        alt={`Wallpaper ${i + 1}`}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {pickedUrl === url && (
+                        <div className="absolute inset-0 bg-violet-500/20 flex items-center justify-center">
+                          <CheckCircle2 className="h-8 w-8 text-violet-300 drop-shadow-lg" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer actions */}
+        <div className="px-6 py-4 border-t border-neutral-800 shrink-0 flex items-center justify-between gap-3">
+          <p className="text-xs text-neutral-500">
+            {pickedUrl ? "Wallpaper selecionado ✓" : "Selecione um wallpaper acima"}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onOpenChange(false)}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-neutral-400 border border-neutral-700 hover:border-neutral-500 hover:text-neutral-300 transition-all cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={!pickedUrl}
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: pickedUrl ? "linear-gradient(135deg,#7c3aed,#4f46e5)" : undefined, backgroundColor: pickedUrl ? undefined : "#3f3f46" }}
+            >
+              Aplicar capa
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
@@ -271,6 +521,8 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [isCoverDialogOpen, setIsCoverDialogOpen] = useState(false);
 
   const [playing, setPlaying] = useState<GameData[]>([]);
   const [wishlist, setWishlist] = useState<GameData[]>([]);
@@ -294,6 +546,7 @@ export default function ProfilePage() {
       setUserEmail(user.email || "");
       setJoinedAt(user.created_at || "");
       setAvatarUrl(getAvatarUrl(user));
+      setCoverUrl(getCoverUrl(user));
 
       const result = await fetchGamesListFromDatabase();
       if (result.success && result.data) {
@@ -331,6 +584,23 @@ export default function ProfilePage() {
       toast({
         title: "Erro ao desfazer finalização",
         description: "Não foi possível atualizar o status do jogo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSelectCover = async (url: string) => {
+    setCoverUrl(url); // optimistic
+    const result = await saveCoverUrl(url, supabase);
+    if (result.success) {
+      toast({
+        title: "Capa atualizada! 🖼️",
+        description: "Sua capa de perfil foi salva com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro ao salvar capa",
+        description: result.error ?? "Tente novamente.",
         variant: "destructive",
       });
     }
@@ -382,9 +652,32 @@ export default function ProfilePage() {
       <Navbar />
 
       {/* ── Banner ── */}
-      <div
-        className="w-full h-40 shrink-0"
-        style={{ background: bannerGradient }}
+      <div className="relative w-full h-48 shrink-0 overflow-hidden">
+        {coverUrl ? (
+          <img
+            src={coverUrl}
+            alt="Capa do perfil"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full" style={{ background: bannerGradient }} />
+        )}
+        {/* Dark gradient at bottom so the profile card blends in */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-neutral-950/60" />
+        {/* Edit cover button */}
+        <button
+          onClick={() => setIsCoverDialogOpen(true)}
+          className="absolute bottom-3 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white/80 bg-black/50 border border-white/10 hover:bg-black/70 hover:text-white hover:border-white/30 backdrop-blur-sm transition-all duration-200 cursor-pointer"
+        >
+          <ImageIcon className="h-3.5 w-3.5" />
+          Editar capa
+        </button>
+      </div>
+
+      <CoverPickerDialog
+        open={isCoverDialogOpen}
+        onOpenChange={setIsCoverDialogOpen}
+        onSelect={handleSelectCover}
       />
 
       {/* ── Main content ── */}
