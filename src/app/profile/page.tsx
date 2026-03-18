@@ -21,6 +21,7 @@ import {
   Search,
   CheckCircle2,
   Gem,
+  Share2,
 } from "lucide-react";
 import { useToast } from "@/app/hooks/use-toast";
 import { Toaster } from "@/app/components/ui/toaster";
@@ -883,6 +884,20 @@ export default function ProfilePage() {
                 <Home className="h-4 w-4" />
                 Início
               </Link>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/profile/${userId}`;
+                  navigator.clipboard.writeText(url);
+                  toast({
+                    title: "Link copiado! 🔗",
+                    description: "O link do seu perfil foi copiado para a área de transferência.",
+                  });
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-neutral-400 border border-neutral-800 hover:border-blue-500/40 hover:text-blue-400 hover:bg-blue-500/5 transition-all duration-200 cursor-pointer"
+              >
+                <Share2 className="h-4 w-4" />
+                Compartilhar
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-neutral-400 border border-neutral-800 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/5 transition-all duration-200 cursor-pointer"

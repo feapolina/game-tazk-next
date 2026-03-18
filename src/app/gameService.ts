@@ -187,3 +187,38 @@ export async function updateGameStatus(
     return { success: false, error: "Ocorreu uma exceção." };
   }
 }
+
+export async function fetchUserGames(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("games")
+      .select("*")
+      .eq("user_id", userId);
+    if (error) {
+      console.log("Erro ao buscar jogos do usuário específico.", error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (exception) {
+    console.log("Exceção ao buscar jogos do usuário.", exception);
+    return { success: false, error: "Ocorreu uma exceção." };
+  }
+}
+
+export async function fetchUserProfile(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    if (error) {
+      console.log("Erro ao buscar dados do perfil público.", error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (exception) {
+    console.log("Exceção ao buscar perfil do usuário", exception);
+    return { success: false, error: "Ocorreu uma exceção." };
+  }
+}
