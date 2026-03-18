@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Gem,
   Share2,
+  Crown,
 } from "lucide-react";
 import { useToast } from "@/app/hooks/use-toast";
 import { Toaster } from "@/app/components/ui/toaster";
@@ -578,10 +579,10 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
   const [joinedAt, setJoinedAt] = useState("");
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -605,10 +606,19 @@ export default function ProfilePage() {
       }
 
       setUserId(user.id);
+      // O profile público tem is_admin
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+      
+      if (profile?.is_admin) {
+        setIsAdmin(true);
+      }
       setUserName(
         user.user_metadata?.full_name || user.email?.split("@")[0] || "Jogador",
       );
-      setUserEmail(user.email || "");
       setJoinedAt(user.created_at || "");
       setAvatarUrl(getAvatarUrl(user));
       setCoverUrl(getCoverUrl(user));
@@ -856,14 +866,17 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <>
-                  <h1 className="text-2xl font-bold text-white truncate">
-                    {userName}
-                  </h1>
+                  <div className="flex justify-start items-center gap-2">
+                    <h1 className="text-2xl font-bold text-white truncate">
+                      {userName}
+                    </h1>
+                    {isAdmin && (
+                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-2 py-0.5 rounded-full border border-violet-400/50 shadow-[0_0_12px_rgba(139,92,246,0.4)] select-none">
+                        <Crown className="w-3 h-3 fill-violet-200 stroke-white" /> Admin
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 mt-1.5">
-                    <span className="flex items-center gap-1.5 text-sm text-neutral-400">
-                      <User className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{userEmail}</span>
-                    </span>
                     {joinedAt && (
                       <span className="flex items-center gap-1.5 text-sm text-neutral-400">
                         <Calendar className="h-3.5 w-3.5 shrink-0" />

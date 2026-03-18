@@ -221,6 +221,7 @@ export default function PublicProfilePage() {
   const [userName, setUserName] = useState("");
   const [joinedAt, setJoinedAt] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -250,6 +251,7 @@ export default function PublicProfilePage() {
       setAvatarUrl(profile.avatar_url);
       setCoverUrl(profile.cover_url);
       setJoinedAt(profile.created_at || "");
+      setIsAdmin(profile.is_admin === true);
 
       const gamesRes = await fetchUserGames(userId);
       if (gamesRes.success && gamesRes.data) {
@@ -358,9 +360,16 @@ export default function PublicProfilePage() {
                 </div>
               ) : (
                 <>
-                  <h1 className="text-2xl font-bold text-white truncate">
-                    {userName}
-                  </h1>
+                  <div className="flex justify-start items-center gap-2">
+                    <h1 className="text-2xl font-bold text-white truncate">
+                      {userName}
+                    </h1>
+                    {isAdmin && (
+                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-2 py-0.5 rounded-full border border-violet-400/50 shadow-[0_0_12px_rgba(139,92,246,0.4)] select-none">
+                        <Gem className="w-3 h-3 fill-violet-200 stroke-white" /> Admin
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 mt-1.5">
                     {joinedAt && (
                       <span className="flex items-center gap-1.5 text-sm text-neutral-400">

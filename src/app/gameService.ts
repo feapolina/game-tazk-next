@@ -43,7 +43,15 @@ export async function saveGameInDatabase(
 
 export async function fetchGamesListFromDatabase() {
   try {
-    const { data, error } = await supabase.from("games").select("*");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Usuário não autenticado." };
+    }
+
+    const { data, error } = await supabase.from("games").select("*").eq("user_id", user.id);
     if (error) {
       console.log(
         "Houve um erro ao fazer o fetch dos jogos do banco de dados.",
