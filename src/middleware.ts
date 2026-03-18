@@ -29,7 +29,7 @@ export async function middleware(req: NextRequest) {
 
     // Se a rota atual NÃO for pública e não for arquivo estático (já tratado no config matcher)
     const isPublicRoute = publicRoutes.some((route) =>
-      pathname.startsWith(route)
+      pathname.startsWith(route),
     );
 
     if (!isPublicRoute) {

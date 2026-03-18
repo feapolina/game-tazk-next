@@ -115,7 +115,7 @@ export default function SearchbarWithList({
                 >
                   <div className="flex justify-center items-center space-x-3">
                     <img
-                      src={optimizeCoverUrl(game.cover_url, 96)}
+                      src={optimizeCoverUrl(game.cover_url, 200)}
                       alt={game.name}
                       loading="lazy"
                       className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
