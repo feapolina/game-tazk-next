@@ -29,7 +29,7 @@ Este projeto foi construído utilizando as seguintes tecnologias modenas:
 
 O projeto está hospedado pelo Supabase, você pode acessá-lo pelo link:
 
-https://game-tazk-next.vercel.app/
+[Acesse o projeto aqui](https://nebula-tazk.vercel.app)
 
 ## Como contribuir com o projeto?
 
